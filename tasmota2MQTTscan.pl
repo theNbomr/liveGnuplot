@@ -1,8 +1,8 @@
-#! /bin/perl -w
+#! /usr/bin/perl -w
 #===================================================================
-#	Supervisory script to manage data logged by 'Tasmota Solar ADS1115'
-#	This code is a MQTT subscriber which listens for messages posted with
-#	ADC converter data from a Tasmota controlled ADS1115 ADC.
+#       Supervisory script to manage data logged by 'Tasmota Solar ADS1115'
+#       This code is a MQTT subscriber which listens for messages posted with
+#       ADC converter data from a Tasmota controlled ADS1115 ADC.
 #
 #  Tasmota rules related to this script:
 # Rule3
@@ -29,24 +29,34 @@
 #     ENDON
 #  
 #
-#	$Id: tasmota2MQTTscan.pl,v 1.1 2024/05/11 00:52:45 bomr Exp $
+#       $Id: tasmota2MQTTscan.pl,v 1.1 2024/05/11 00:52:45 bomr Exp $
 #
-#	$Log: tasmota2MQTTscan.pl,v $
-#	Revision 1.1  2024/05/11 00:52:45  bomr
-#	Initial test release
+#       $Log: tasmota2MQTTscan.pl,v $
+#       Revision 1.1  2024/05/11 00:52:45  bomr
+#       Initial test release
 #
 #
 #===================================================================
 
 use strict;
 use Getopt::Long;
+# use JSON::Parser;
+use JSON::Path;
 use IO::Handle;
 
+# Obsolete unless using CVS (deprecated; moving to git/github)
 use constant REVISION => '$Id: tasmota2MQTTscan.pl,v 1.1 2024/05/11 00:52:45 bomr Exp $';
-use constant MQTT_BROKER => 'mosquitto_sub -h 192.168.0.19 -v -t RN_IOT_DAQ/D1Mini/A0';
-use constant JSON_VOLTAGE => "VAR10";
 
-use constant LOGFILE_BASENAME => 'd1MiniADS1115.log';
+use constant MQTT_CLIENT => 'mosquitto_sub';
+use constant MQTT_BROKER => '192.168.0.19';    
+use constant MQTT_TOPIC => 'tele/tasmota_F74C1D/STATE';
+use constant MQTT_OPTIONS => "-v ";
+use constant MQTT_JPATH => "\$";
+use constant MQTT_TIME_JPATH => '$.Time';
+
+# use constant JSON_VOLTAGE => "VAR10";
+
+use constant LOGFILE_BASENAME => '111-ESP01_RN2-DS18B20.log';
 use constant LOGFILE_DIRNAME => '/tmp';
 
 sub usage($$);
@@ -56,12 +66,22 @@ my $verbose = undef;
 my $logBaseName = LOGFILE_BASENAME;
 my $logDirName = LOGFILE_DIRNAME;
 
+my $mqttClient = MQTT_CLIENT;
+my $mqttBroker = MQTT_BROKER;
+my $mqttTopic = MQTT_TOPIC;
+my $mqttOptions = MQTT_OPTIONS;
+my $mqttJPath = MQTT_JPATH;
+my $mqttTimeJPath = MQTT_TIME_JPATH;
 
 my %optArgs = (
     "help"          =>  \$help,
     "verbose"       =>  \$verbose,
     "logBaseName=s" =>  \$logBaseName,
     "logDirName=s"  =>  \$logDirName,
+    "mqttBroker=s"  =>  \$mqttBroker,
+    "mqttTopic=s"   =>  \$mqttTopic,
+    "mqttOptions=s" =>  \$mqttOptions,
+    "mqttJPath=s"   =>  \$mqttJPath,
 );
 
 my %optHelp = (
@@ -69,6 +89,10 @@ my %optHelp = (
     "verbose"     =>  "Report activities to console",
     "logBaseName" =>  "base filename, without date stamp or directory",
     "logDirName"  =>  "directory name to store output logs",
+    "mqttBroker"  =>  "host name/IP of MQTT broker",
+    "mqttTopic"   =>  "MQTT topic to subscribe for periodic updates",
+    "mqttOptions" =>  "Command options to MQTT Client app",
+    "mqttJPath"   =>  "JSON Path notation to desired sensor data",
 );
 
 my $timeStamp = "";
@@ -77,35 +101,43 @@ my $logfileDate = "";
 my $signalHappened = undef;
 
 #
-#	Trap Ctrl-C, so we can allow a complete record to be written
-#	without cutting off any of the last record 
+#       Trap Ctrl-C, so we can allow a complete record to be written
+#       without cutting off any of the last record 
 #
-$SIG{ INT } = sub{ $signalHappened = 1; };
+    $SIG{ INT } = sub{ $signalHappened = 1; };
 
-	GetOptions( %optArgs );
-	if( defined( $help ) ){
-		usage( \%optArgs, \%optHelp );
-		exit( 0 );
-	}
+    GetOptions( %optArgs );
+    if( defined( $help ) ){
+        usage( \%optArgs, \%optHelp );
+        exit( 0 );
+    }
 
 
-	my( $sec,$min,$hour,$day,$month,$year,@other ) = localtime( time );
-	my $dayOfMonth = $day;
-	$logfileDate = sprintf( "%04d-%02d-%02d", $year+1900, $month+1, $day );
-	my $fileName = sprintf( "%s/%s_%s", $logDirName, $logfileDate, $logBaseName );
-	if( $verbose ){
-		print "Logfile: $fileName\n";
-	}
+    my( $sec,$min,$hour,$day,$month,$year,@other ) = localtime( time );
+    my $dayOfMonth = $day;
+    $logfileDate = sprintf( "%04d-%02d-%02d", $year+1900, $month+1, $day );
+    my $fileName = sprintf( "%s/%s_%s", $logDirName, $logfileDate, $logBaseName );
+    if( $verbose ){
+        print "Logfile: $fileName\n";
+    }
 
-	# 
-	#	Open log file for appending, to allow for re-starts without losing 
-	#	any existing records.
-	#
-	open( LOG, ">>$fileName" ) || die "Cannot open '$fileName' for writing: $!\n"; 
-	print( LOG "#    $fileName\n# ".localtime( time )."\n" );
-	print( LOG "#    Created by: ".REVISION."\n" );
+    # 
+    #       Open log file for appending, to allow for re-starts without losing 
+    #       any existing records.
+    #
+    open( LOG, ">>$fileName" ) || die "Cannot open '$fileName' for writing: $!\n"; 
+    print( LOG "#    $fileName\n# ".localtime( time )."\n" );
+    print( LOG "#    Created by: ".REVISION."\n" );
 
-    open( MQTT, MQTT_BROKER." |" );
+    my $jPath = JSON::Path->new( $mqttJPath );
+    my $timeJPath = JSON::Path->new( $mqttTimeJPath );
+    
+    my $mqttCommand = "$mqttClient -h $mqttBroker -t $mqttTopic $mqttOptions ";
+    if( $verbose ){
+        print "MQTT Command: $mqttCommand\n";
+    }
+    open( MQTT, "$mqttCommand |" ) || die "Cannot launch $mqttCommand: $!\n";
+
     while( <MQTT> ){
         if( $verbose ){
             print $_;
@@ -113,13 +145,13 @@ $SIG{ INT } = sub{ $signalHappened = 1; };
 
         my $payload = $_;
         ($payload) = $payload =~ m/\{.+\}/g;
-        $payload =~ s/[\{\}]//g;
-        $payload =~ s/":/"^/g;
-        $payload =~ s/"//g;
-        my @jsonParams = split( /[,^]/, $payload );
-        my %json = @jsonParams;
-
-        $timeStamp = $json{ "Time" };
+        my $payloadJSON = $payload;
+        if( $verbose ){
+            print "payload: $payload\n";
+            print "payload JSON: $payloadJSON\n";
+        }
+        
+        $timeStamp = $timeJPath->value( $payloadJSON );
         my ( $ymd,$tod ) = split( /T/, $timeStamp );
 
         #
@@ -152,21 +184,23 @@ $SIG{ INT } = sub{ $signalHappened = 1; };
             }
         }
 
-        if( $voltage != $json{ "A0-SmoothV" } ){
-            $voltage = $json{ "A0-SmoothV" };
-            if( $verbose ){
-                print "$timeStamp $voltage\n";
-            }
-            print LOG "$timeStamp $voltage\n";
+        #
+        #   Extract specified parameter from JSON encoded data
+        #        
+        my $jsonParam = $jPath->value( $payloadJSON );
+        print LOG "$timeStamp $jsonParam\n";
+        if( $verbose ){
+            print "LOG $timeStamp $jsonParam\n";
         }
+        
         LOG->flush();
         
-	if( $signalHappened ){
-		if( $verbose ){
-			print "Trapped SIGINT. Exiting\n";
-		}
-		last;
-	}
+        if( $signalHappened ){
+            if( $verbose ){
+                print "Trapped SIGINT. Exiting\n";
+            }
+            last;
+        }
 
     }
     close( LOG );
@@ -180,7 +214,7 @@ my  %optionHelp = %{$_[1]};
 
     print "Usage:\n$0 <options>\n";
     print "options:\n";
-    foreach my $option ( keys %options ){
+    foreach my $option ( sort keys %options ){
         my $value = $options{$option};
         $option =~ s/=.+//;
         my $text = "\t--";
