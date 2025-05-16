@@ -187,6 +187,8 @@ my $signalHappened = undef;
             #
             print( LOG "#    $fileName   ".scalar localtime( time )."\n" );
             print( LOG "#    Created by: ".REVISION."\n" );
+            print( LOG "#    MQTT Command: $mqttCommand\n" );
+            print( LOG "#    JSON Paths: $mqttTimeJPath, $mqttJPath\n" );
             if( $verbose ){
                 print "New day. Filename = $fileName\n"; 
             }
