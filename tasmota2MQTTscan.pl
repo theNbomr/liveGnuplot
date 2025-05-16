@@ -126,7 +126,8 @@ my $signalHappened = undef;
     #       any existing records.
     #
     open( LOG, ">>$fileName" ) || die "Cannot open '$fileName' for writing: $!\n"; 
-    print( LOG "#    $fileName\n# ".localtime( time )."\n" );
+    print( LOG "#    $fileName\n" );
+    print( LOG "#    ".localtime( time )."\n" );
     print( LOG "#    Created by: ".REVISION."\n" );
 
     my $jPath = JSON::Path->new( $mqttJPath );
