@@ -226,17 +226,7 @@ my  %optionHelp = %{$_[1]};
         $option =~ s/=.+//;
         my $text = "\t--";
 
-        if( defined( ${$value}) ){
-            if( $option =~ m/canMsgId/ ){
-                $text .= sprintf( "%s (default 0x%X )", $option, ${$value} );
-            }
-            else{
-                $text .= "$option (default ${$value})";
-            }
-        }
-        else{
-            $text .= "$option (undefined)";
-        }
+        $text .= "$option (undefined)";
 
         if ($optionHelp{$option}) {
                 $text .= ' -- '.$optionHelp{$option};
