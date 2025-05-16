@@ -136,13 +136,20 @@ my $signalHappened = undef;
     if( $verbose ){
         print "MQTT Command: $mqttCommand\n";
     }
+    
+    print( LOG "#     MQTT Command: $mqttCommand\n" );
+    print( LOG "#     JSON Paths: $mqttTimeJPath, $mqttJPath\n" );
+    
     open( MQTT, "$mqttCommand |" ) || die "Cannot launch $mqttCommand: $!\n";
 
     while( <MQTT> ){
         if( $verbose ){
             print $_;
         }
-
+         
+        #
+        #   Process the MQTT payload, stripping any leading topic header
+        #
         my $payload = $_;
         ($payload) = $payload =~ m/\{.+\}/g;
         my $payloadJSON = $payload;
