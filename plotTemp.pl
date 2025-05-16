@@ -44,7 +44,7 @@ use strict;
 #
 
 use Getopt::Long;
-use constant REVISION           => '$Id: plotTemp.pl,v 1.11 2024/10/22 21:36:01 bomr Exp $';
+use constant REVISION		=> '$Id: plotTemp.pl,v 1.11 2024/10/22 21:36:01 bomr Exp $';
 use constant DEFAULT_LOG_DIR    =>  '/home/bomr/Downloads/Data/';
 use constant DEFAULT_BASENAME   => '_27161_116_Ave';
 use constant DEFAULT_SUFFIX     => '.log';
