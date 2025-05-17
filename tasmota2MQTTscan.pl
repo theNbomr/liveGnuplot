@@ -229,7 +229,12 @@ my  %optionHelp = %{$_[1]};
         $option =~ s/=.+//;
         my $text = "\t--";
 
-        $text .= "$option (undefined)";
+        if( defined( ${$value}) ){
+            $text .= "$option (default ${$value})";
+        }
+        else{
+            $text .= "$option (undefined)";
+        }
 
         if ($optionHelp{$option}) {
                 $text .= ' -- '.$optionHelp{$option};
