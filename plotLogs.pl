@@ -48,7 +48,7 @@ my $recent = 1;
 my $repeat = 0;
 my $gnuplotOutput = undef;
 my $dataServer = DATA_SERVER;
-my $logDir = DEFAULT_LOG_DIR;
+my $dataLogDir = DEFAULT_LOG_DIR;
 my $logBaseName = DEFAULT_BASENAME;
 
 my %optArgs = (
@@ -59,7 +59,7 @@ my %optArgs = (
     "repeat=i"      =>  \$repeat,
     "output=s"      =>  \$gnuplotOutput,
     "logBaseName=s" =>  \$logBaseName,
-    "logDir=s"      =>  \$logDir,
+    "dataLogDir=s"  =>  \$dataLogDir,
 );
 
 my %optHelp = (
@@ -70,7 +70,7 @@ my %optHelp = (
     "repeat"      =>  "Time in minutes between updates",
     "output"      =>  "Filename for plot image file (implies repeat=0)",
     "logBaseName" =>  "base name of log files, without date prefix",
-    "logDir"      =>  "Where the data logs are stored",
+    "dataLogDir"      =>  "Where the data logs are stored",
 );
 
 # Need this so we can kill all of the 
