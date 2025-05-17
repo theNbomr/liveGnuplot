@@ -9,7 +9,7 @@ A tool to scrape parameter data from MQTT topics and store in compatible log fil
     alias plotTemp='cd ~/Downloads/Data && ~/Util/pl/plotTemp.pl --recent=8 --repeat=1'
 
 
-The tasmota2MQTTscan.pl tool heavily exploits the JSON::Path module to allow the user to concisely specify a path to a value that is stored in a JSON Object (I hope I've used that terminology correctly). It allows the user to specify a MQTT broker & topic, and to extract a scalar value from the JSON payload of the topic:
+The _**tasmota2MQTTscan.pl**_ tool heavily exploits the JSON::Path module to allow the user to concisely specify a path to a value that is stored in a JSON Object (I hope I've used that terminology correctly). It allows the user to specify a MQTT broker & topic, and to extract a scalar value from the JSON payload of the topic:
 
     bomr@orangepi3:~/Util/Projects/liveGnuplot$ ./tasmota2MQTTscan.pl --mqttBroker='192.168.1.100' -mqttOptions="-v" --mqttTopic='tele/tasmota_F74C1D/SENSOR' --mqttJPath="$..Temperature" --verbose=1 --logDirName=/home/bomr/data
 
