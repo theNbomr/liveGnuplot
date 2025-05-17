@@ -79,7 +79,7 @@ my $dataLogs = undef;
 my $recent = 1;
 my $repeat = 0;
 my $gnuplotOutput = undef;
-my $dataServer = data_SERVER;
+my $dataServer = DATA_SERVER;
 my $logDir = DEFAULT_LOG_DIR;
 my $logBaseName = DEFAULT_BASENAME;
 
