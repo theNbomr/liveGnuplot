@@ -50,7 +50,7 @@ use constant DEFAULT_LOG_DIR    => '/mnt/delldeb8/usr1/data/';
 use constant DEFAULT_BASENAME   => '_ADS1115_data';
 use constant DEFAULT_SUFFIX     => '.log';
 use constant DATE_FORMAT        => '%Y-%m-%d';
-use constant data_SERVER       => "192.168.0.5";
+use constant DATA_SERVER       => "192.168.0.5";
 
 sub usage($$);
 
@@ -75,7 +75,7 @@ my @weekDays = ( "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" );
 
 my $help = undef;
 my $verbose = undef;
-my $dataogs = undef;
+my $dataLogs = undef;
 my $recent = 1;
 my $repeat = 0;
 my $gnuplotOutput = undef;
