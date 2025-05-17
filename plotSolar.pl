@@ -1,15 +1,15 @@
 #! /usr/bin/perl -w
 use strict;
 #
-# plotSolar.pl
+# plotdata.pl
 #
-#   This program is to copy solar panel log files 
+#   This program is to copy data panel log files 
 #   from a CANbus dump file and continuously update 
-#   a gnuplot rendering of the solar cell voltage data.
+#   a gnuplot rendering of the data cell voltage data.
 #
 #
 # $Author: bomr $
-# $Log: plotSolar.pl,v $
+# $Log: plotdata.pl,v $
 # Revision 1.9  2024/10/22 16:16:02  bomr
 # Added 'noraise' to gnuplot X11 term
 #
@@ -38,19 +38,19 @@ use strict;
 #
 # Revision 1.1  2023/07/19 19:09:16  bomr
 # New script slightly modified and simplified from plotTemp.pl
-# Plots solar panel voltage acquired from Arduino and cpatured in Linux candump
+# Plots data panel voltage acquired from Arduino and cpatured in Linux candump
 # related utility: runcandump.pl wrapper around candump, processes the data into
 # gnuplot compatible data logs, one per day.
 #
 #
 
 use Getopt::Long;
-use constant REVISION => '$Id: plotSolar.pl,v 1.9 2024/10/22 16:16:02 bomr Exp $';
-use constant DEFAULT_LOG_DIR    =>  '/mnt/delldeb8/usr1/data/';
-use constant DEFAULT_BASENAME   => '_ADS1115_Solar';
+use constant REVISION => '$Id: plotdata.pl,v 1.9 2024/10/22 16:16:02 bomr Exp $';
+use constant DEFAULT_LOG_DIR    => '/mnt/delldeb8/usr1/data/';
+use constant DEFAULT_BASENAME   => '_ADS1115_data';
 use constant DEFAULT_SUFFIX     => '.log';
 use constant DATE_FORMAT        => '%Y-%m-%d';
-use constant SOLAR_SERVER       => "192.168.0.5";
+use constant DATA_SERVER       => "192.168.0.5";
 
 sub usage($$);
 
@@ -64,7 +64,7 @@ my @gnuplotCommands = (
     'set format x "%H:%M"',
     'set mouse mouseformat 3',
     'set timestamp bottom',
-    'set key on left top box opaque textcolor variable width 2 spacing 1.2 title "-- Solar --"',
+    'set key on left top box opaque textcolor variable width 2 spacing 1.2 title "-- data --"',
     'set grid',
 );
 
@@ -75,34 +75,34 @@ my @weekDays = ( "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" );
 
 my $help = undef;
 my $verbose = undef;
-my $solarLogs = undef;
+my $dataLogs = undef;
 my $recent = 1;
 my $repeat = 0;
 my $gnuplotOutput = undef;
-my $solarServer = SOLAR_SERVER;
-my $solarLogDir = DEFAULT_LOG_DIR;
+my $dataServer = DATA_SERVER;
+my $logDir = DEFAULT_LOG_DIR;
 my $logBaseName = DEFAULT_BASENAME;
 
 my %optArgs = (
     "help"          =>  \$help,
     "verbose"       =>  \$verbose,
-    "solarLogs=s"   =>  \$solarLogs,
+    "dataLogs=s"    =>  \$dataLogs,
     "recent=i"      =>  \$recent,
     "repeat=i"      =>  \$repeat,
     "output=s"      =>  \$gnuplotOutput,
     "logBaseName=s" =>  \$logBaseName,
-    "solarLogDir=s" =>  \$solarLogDir,
+    "logDir=s"      =>  \$logDir,
 );
 
 my %optHelp = (
     "help"        =>  "This helpful message",
     "verbose"     =>  "Report activities to console",
-    "solarLogs"   =>  "List of specific data files to plot",
+    "dataLogs"    =>  "List of specific data files to plot",
     "recent"      =>  "Number of days of most recent data to plot",
     "repeat"      =>  "Time in minutes between updates",
     "output"      =>  "Filename for plot image file (implies repeat=0)",
     "logBaseName" =>  "base name of log files, without date prefix",
-    "solarLogDir" =>  "Where the solar logs are stored",
+    "logDir"      =>  "Where the data logs are stored",
 );
 
 # Need this so we can kill all of the 
@@ -131,8 +131,8 @@ my $pgid = getpgrp();
     }
 
     #  Make sure directory name has trailing '/'
-    if( $solarLogDir !~ m/\/$/ ){
-        $solarLogDir .= "//";
+    if( $dataLogDir !~ m/\/$/ ){
+        $dataLogDir .= "//";
     }
             
     #
@@ -183,24 +183,24 @@ my $pgid = getpgrp();
             chomp $dateStr;
             my $dow = `date \"+%w\" --date=\"$i days ago\"`;
             $dow = $weekDays[ $dow ];
-            my $localFile = $solarLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
+            my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
         }
     }
     my $yesterday = "";
     my $today = undef;
-    my @solarLogs = ();
+    my @dataLogs = ();
     do{
         #
         #       
         #
-        if( defined( $solarLogs ) ){
+        if( defined( $dataLogs ) ){
 
-            print "--solarLogs: \"$solarLogs\"\n";   
-            @solarLogs = split( /[ ,:;\n]+/, $solarLogs );
-            for( my $i = 0; $i < @solarLogs; $i++ ){
-                system( "scp -q -p '$solarServer:$solarLogs[$i]'' . > /dev/null" );
-                $solarLogs[$i] = "'$solarLogs[$i]' using 1:2 with steps";
-                print $solarLogs[$i],"\n";
+            print "--dataLogs: \"$dataLogs\"\n";   
+            @dataLogs = split( /[ ,:;\n]+/, $dataLogs );
+            for( my $i = 0; $i < @dataLogs; $i++ ){
+                system( "scp -q -p '$dataServer:$dataLogs[$i]'' . > /dev/null" );
+                $dataLogs[$i] = "'$dataLogs[$i]' using 1:2 with steps";
+                print $dataLogs[$i],"\n";
             }
         }
         elsif( defined( $recent ) ){
@@ -211,7 +211,7 @@ my $pgid = getpgrp();
             my $dateStr = `TZ=PST+8 date \"+%Y-%m-%d\"`;
             chomp $dateStr;
             
-            my $localFile = $solarLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
+            my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
 
             #
             #  Check for new day. If new day, grab yesterday's last data file
@@ -228,26 +228,26 @@ my $pgid = getpgrp();
                 #
                 my $dateStr = `TZ=PST+8 date \"+%Y-%m-%d\" --date=\"1 days ago\"`;
                 chomp $dateStr;
-                my $localFile = $solarLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
+                my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
             }
 
             #
             #  Compose a list of all files to plot
             #
-            @solarLogs = ();
+            @dataLogs = ();
             for( my $i = 0; $i < $recent; $i++ ){
                 my $dateStr = `TZ=PST+8 date \"+%Y-%m-%d\" --date=\"$i days ago\"`;
                 chomp $dateStr;
                 my $dow = `date \"+%w\" --date=\"$i days ago\"`;
                 $dow = $weekDays[ $dow ];
 
-                $localFile = $solarLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
-#                push @solarLogs, "'$localFile' using 1:2 with steps title '($dow) $dateStr'";
-                push @solarLogs, "'$localFile' using 2:3 with steps title '($dow) $dateStr'";
+                $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
+#                push @dataLogs, "'$localFile' using 1:2 with steps title '($dow) $dateStr'";
+                push @dataLogs, "'$localFile' using 2:3 with steps title '($dow) $dateStr'";
             }
         }
 
-        my $plotFiles = join( ",\\\n", sort @solarLogs );  #  Use 'trailing backslash' notation
+        my $plotFiles = join( ",\\\n", sort @dataLogs );  #  Use 'trailing backslash' notation
         if( $verbose ){
             print "plot $plotFiles\n";
         }
