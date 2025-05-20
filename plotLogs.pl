@@ -18,7 +18,8 @@ use constant DEFAULT_LOG_DIR    => '/mnt/delldeb8/usr1/data/';
 use constant DEFAULT_BASENAME   => '_ADS1115_data';
 use constant DEFAULT_SUFFIX     => '.log';
 use constant DATE_FORMAT        => '%Y-%m-%d';
-use constant DATA_SERVER       => "192.168.0.5";
+use constant DATA_SERVER        => "192.168.0.5";
+use constant PLOT_TITLE         => "-- data --";
 
 sub usage($$);
 
@@ -32,8 +33,8 @@ my @gnuplotCommands = (
     'set format x "%H:%M"',
     'set mouse mouseformat 3',
     'set timestamp bottom',
-    'set key on left top box opaque textcolor variable width 2 spacing 1.2 title "-- data --"',
     'set grid',
+    'set key on left top box opaque textcolor variable width 2 spacing 1.2 title "-- data --"',
 );
 
 my $gnuplotPID;
@@ -47,6 +48,7 @@ my $dataLogs = undef;
 my $recent = 1;
 my $repeat = 0;
 my $gnuplotOutput = undef;
+my $gnuplotTitle = PLOT_TITLE;
 my $dataServer = DATA_SERVER;
 my $dataLogDir = DEFAULT_LOG_DIR;
 my $logBaseName = DEFAULT_BASENAME;
@@ -58,6 +60,7 @@ my %optArgs = (
     "recent=i"      =>  \$recent,
     "repeat=i"      =>  \$repeat,
     "output=s"      =>  \$gnuplotOutput,
+    "plotTitle=s"   =>  \$gnuplotTitle,
     "logBaseName=s" =>  \$logBaseName,
     "dataLogDir=s"  =>  \$dataLogDir,
 );
@@ -69,8 +72,9 @@ my %optHelp = (
     "recent"      =>  "Number of days of most recent data to plot",
     "repeat"      =>  "Time in minutes between updates",
     "output"      =>  "Filename for plot image file (implies repeat=0)",
+    "plotTitle"   =>  "Key titlebar content",
     "logBaseName" =>  "base name of log files, without date prefix",
-    "dataLogDir"      =>  "Where the data logs are stored",
+    "dataLogDir"  =>  "Where the data logs are stored",
 );
 
 # Need this so we can kill all of the 
@@ -96,6 +100,10 @@ my $pgid = getpgrp();
 
     if( $verbose ){
         print REVISION,"\n";
+    }
+    
+    if( ! defined( $gnuplotTitle ) || $gnuplotTitle eq '' ){
+        $gnuplotTitle = $logBaseName;
     }
 
     #  Make sure directory name has trailing '/'
@@ -139,6 +147,7 @@ my $pgid = getpgrp();
     }
 
     foreach my $gnuplotCommand ( @gnuplotCommands ){
+        $gnuplotCommand =~ s/-- data --/-- $gnuplotTitle --/;
         print $gnuplot "$gnuplotCommand\n";
         if( $verbose ){
             print "$gnuplotCommand\n";
@@ -181,23 +190,23 @@ my $pgid = getpgrp();
             
             my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
 
-            #
-            #  Check for new day. If new day, grab yesterday's last data file
-            #
-            $today = `date \"+%w\"`;
-            #
-            #   See if this is a new day on the temperature server. Failed 
-            #   copy from the server probably means inconsistency between
-            #   temp server TZ (DST) and this host in the hour after midnight.
-            #
-            if( $today ne $yesterday && $recent > 1 ){
-                #
-                #  New day. Grab one last copy of yesterday's data
-                #
-                my $dateStr = `TZ=PST+8 date \"+%Y-%m-%d\" --date=\"1 days ago\"`;
-                chomp $dateStr;
-                my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
-            }
+#             
+#              Check for new day. If new day, grab yesterday's last data file
+#             
+#             $today = `date \"+%w\"`;
+#             
+#               See if this is a new day on the temperature server. Failed 
+#               copy from the server probably means inconsistency between
+#               temp server TZ (DST) and this host in the hour after midnight.
+#             
+#             if( $today ne $yesterday && $recent > 1 ){
+#                 
+#                  New day. Grab one last copy of yesterday's data
+#                 
+#                 my $dateStr = `TZ=PST+8 date \"+%Y-%m-%d\" --date=\"1 days ago\"`;
+#                 chomp $dateStr;
+#                 my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
+#             }
 
             #
             #  Compose a list of all files to plot
