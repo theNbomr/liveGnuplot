@@ -14,12 +14,13 @@ use strict;
 
 
 use Getopt::Long;
+
 use constant REVISION => 'CVS Tags obsoleted by Git/Github';
 use constant DEFAULT_LOG_DIR    => '/mnt/delldeb8/usr1/data/';
 use constant DEFAULT_BASENAME   => '_ADS1115_data';
 use constant DEFAULT_SUFFIX     => '.log';
 use constant DATE_FORMAT        => '%Y-%m-%d';
-use constant DATA_SERVER        => "192.168.0.5";
+# use constant DATA_SERVER        => "192.168.0.5";
 use constant PLOT_TITLE         => "-- data --";
 
 sub usage($$);
@@ -50,7 +51,7 @@ my $recent = 1;
 my $repeat = 0;
 my $gnuplotOutput = undef;
 my $gnuplotTitle = PLOT_TITLE;
-my $dataServer = DATA_SERVER;
+# my $dataServer = DATA_SERVER;
 my $dataLogDir = DEFAULT_LOG_DIR;
 my $logBaseName = DEFAULT_BASENAME;
 
@@ -107,9 +108,9 @@ my $pgid = getpgrp();
         $gnuplotTitle = $logBaseName;
     }
 
-    #  Make sure directory name has trailing '/'
-    if( $dataLogDir !~ m/\/$/ ){
-        $dataLogDir .= "//";
+    #  Make sure directory name has no trailing '/'
+    if( $dataLogDir =~ m/\/$/ ){
+        $dataLogDir =~ s/\/$//;
     }
             
     #
@@ -160,7 +161,7 @@ my $pgid = getpgrp();
             chomp $dateStr;
             my $dow = `date \"+%w\" --date=\"$i days ago\"`;
             $dow = $weekDays[ $dow ];
-            my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
+            my $localFile = $dataLogDir."/".$dateStr.$logBaseName.DEFAULT_SUFFIX;
         }
     }
 #     my $yesterday = "";
@@ -206,7 +207,7 @@ my $pgid = getpgrp();
                 my $dow = `date \"+%w\" --date=\"$i days ago\"`;
                 $dow = $weekDays[ $dow ];
 
-                $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
+                $localFile = $dataLogDir."/".$dateStr.$logBaseName.DEFAULT_SUFFIX;
                 push @dataLogs, "'$localFile' using 2:3 with steps title '($dow) $dateStr'";
             }
         }
