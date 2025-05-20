@@ -7,8 +7,9 @@ use strict;
 #
 #	Plot parameter data files with gnuplot. Continuously update 
 #	plot data, reading from new data files at the beginning of 
-#       each calendar day.
-#       Generalized version of the original plotSolar.pl & plotTemp.pl scripts.
+#   each calendar day.
+#   
+#   Generalized version of the original plotSolar.pl & plotTemp.pl scripts.
 # --------------------------------------------------------------------
 
 
@@ -143,7 +144,6 @@ my $pgid = getpgrp();
         use FileHandle;
         $gnuplot->autoflush(1);
         $SIG{ INT } = \&endPlot;
-    
     }
 
     foreach my $gnuplotCommand ( @gnuplotCommands ){
@@ -163,8 +163,9 @@ my $pgid = getpgrp();
             my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
         }
     }
-    my $yesterday = "";
-    my $today = undef;
+#     my $yesterday = "";
+#     my $today = undef;
+
     my @dataLogs = ();
     do{
         #
@@ -172,12 +173,17 @@ my $pgid = getpgrp();
         #
         if( defined( $dataLogs ) ){
 
-            print "--dataLogs: \"$dataLogs\"\n";   
+            if( $verbose ){
+                print "--dataLogs: \"$dataLogs\"\n";
+            }
+            
             @dataLogs = split( /[ ,:;\n]+/, $dataLogs );
             for( my $i = 0; $i < @dataLogs; $i++ ){
-                system( "scp -q -p '$dataServer:$dataLogs[$i]'' . > /dev/null" );
+                # system( "scp -q -p '$dataServer:$dataLogs[$i]'' . > /dev/null" );
                 $dataLogs[$i] = "'$dataLogs[$i]' using 1:2 with steps";
-                print $dataLogs[$i],"\n";
+                if( $verbose ){
+                    print $dataLogs[$i],"\n";
+                }
             }
         }
         elsif( defined( $recent ) ){
@@ -190,24 +196,6 @@ my $pgid = getpgrp();
             
             my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
 
-#             
-#              Check for new day. If new day, grab yesterday's last data file
-#             
-#             $today = `date \"+%w\"`;
-#             
-#               See if this is a new day on the temperature server. Failed 
-#               copy from the server probably means inconsistency between
-#               temp server TZ (DST) and this host in the hour after midnight.
-#             
-#             if( $today ne $yesterday && $recent > 1 ){
-#                 
-#                  New day. Grab one last copy of yesterday's data
-#                 
-#                 my $dateStr = `TZ=PST+8 date \"+%Y-%m-%d\" --date=\"1 days ago\"`;
-#                 chomp $dateStr;
-#                 my $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
-#             }
-
             #
             #  Compose a list of all files to plot
             #
@@ -219,7 +207,6 @@ my $pgid = getpgrp();
                 $dow = $weekDays[ $dow ];
 
                 $localFile = $dataLogDir.$dateStr.$logBaseName.DEFAULT_SUFFIX;
-#                push @dataLogs, "'$localFile' using 1:2 with steps title '($dow) $dateStr'";
                 push @dataLogs, "'$localFile' using 2:3 with steps title '($dow) $dateStr'";
             }
         }
