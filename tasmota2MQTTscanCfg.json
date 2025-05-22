@@ -1,0 +1,128 @@
+{
+    "configuration_name" : "rn_test1_cfg",
+    "comment_list" : {
+        "comment_1" : "configuration file in JSON notation for the MQTT Scraper application",
+        "comment_2" : "2025-May-20 RN thenbomr@gmail.com"
+    },
+    
+    "mqtt_brokers" : [
+        { 
+            "delldeb8" : {
+                "ip": "192.168.0.19",
+                "port" : "1883"
+            }
+        },
+                
+        { 
+            "delli3deb11" : { 
+                "ip" : "192.168.1.101",
+                "port" : "18883"
+            }
+        },
+            
+        { 
+            "orangepi3" : {
+                "ip":"192.68.1.100",
+                "port" : "18883"
+            }
+        }
+    ],
+    
+    "metrics" : [
+        { 
+            "111_esp01_temperature" : {
+                "broker" : "orangepi3",
+                "topic"  : "tele/tasmota_F74C1D/SENSOR",
+                "ydata"  : "$.DS18B20.Temperature",
+                "yformat" : "number",
+                "xdata"  : "$.Time",
+                "xformat" : "timedate",
+                "storage" : {
+                    "file" : "111_esp01_temperature"
+                }
+            }
+        },
+
+        { 
+            "111_esp01_signal" : {
+                "broker" : "orangepi3",
+                "topic"  : "tele/tasmota_F74C1D/STATE",
+                "ydata"  : "$.Wifi.Signal",
+                "yformat" : "number",
+                "xdata"  : "$.Time",
+                "xformat" : "timedate",
+                "storage" : {
+                    "file" : "111_esp01_signal"
+                }
+            }
+        },
+            
+        { 
+            "111_esp32_signal" : {
+                "broker" : "orangepi3",
+                "topic"  : "tele/tasmota_F74C1D/STATE",
+                "ydata"  : "$.Wifi.Signal",
+                "yformat" : "number",
+                "xdata"  : "$.Time",
+                "xformat" : "timedate",
+                "storage" : {
+                    "file" : "111_esp32_signal"
+                }
+            }
+        }
+            
+    ],
+    
+    "files" : [
+        {
+            "111_esp01_signal" : {
+                "directory" : "/home/bomr/data/wifi_strength",
+                "basename"  : "111_esp01_signal"
+            }
+        },
+        {    
+            "111_esp32_signal" : {
+                "directory" : "/home/bomr/data/wifi_strength",
+                "basename"  : "111_esp32_signal"
+            }
+        },
+        {
+            
+            "111_esp01_temperature" : {
+                "directory" : "/home/bomr/data/esp01_temperature",
+                "basename"  : "111_esp01_temperature"
+            } 
+        }
+    ],
+    
+    "dbs" : [
+        { 
+            "postgresql" : {
+                "database" : "111Home", 
+                "schema" : "111_signal",
+                "table"  : "111_esp01_signal",
+                "xcolumn" : "timedate",
+                "ycolumn" : "signal"
+            }
+        },
+        { 
+            "postgresql" : {
+                "database" : "111Home", 
+                "schema" : "111_signal",
+                "table"  : "111_esp32_signal",
+                "xcolumn" : "timedate",
+                "ycolumn" : "signal"
+            }
+        },
+        {
+            "postgresql" : {
+                "database" : "111Home", 
+                "schema" : "111_temperature",
+                "table"  : "111_esp01_temperature",
+                "xcolumn" : "timedate",
+                "ycolumn" : "temperature"
+            }
+        }
+    ]
+}
+
