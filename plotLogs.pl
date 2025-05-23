@@ -25,6 +25,10 @@ use constant PLOT_TITLE         => "-- data --";
 
 sub usage($$);
 
+#
+#   DO NOT MODIFY order of commands. See below, where other
+#   code assumes index element numbers of each gnuplot command.
+#
 my @gnuplotCommands = (
     'set term x11 noraise size 1080,720',
     'set datafile separator " T"',
@@ -114,7 +118,8 @@ my $pgid = getpgrp();
     }
             
     #
-    #  If static data specified, modify gnuplot commands
+    #  If static data specified, modify gnuplot commands 
+    #   (see comment above, on gnuplot command array definition)
     #
     if( defined( $gnuplotOutput ) ){
         $repeat = 0;
@@ -123,7 +128,7 @@ my $pgid = getpgrp();
         #
         # Modify x axis to accomodate larger PNG font
         #
-        $gnuplotCommands[5] = 'set xtics "00:00:00",7200,"23:59:59"';
+        $gnuplotCommands[6] = 'set xtics "00:00:00",7200,"23:59:59"';
 
 
         #

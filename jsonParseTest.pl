@@ -129,10 +129,14 @@ else{
 if( defined( $metrics ) ){
     print "METRICS:\n";
     print "\tRef:", ref( $metrics ), "\n";
-    my %metricsParams = %{ $metrics };
-    foreach my $metric ( keys %metricsParams ){
-        print "\tMETRIC: $metric: (", join( ", ", sort keys %{ $metricsParams{ $metric } } ), ")\n";
-        my %metricParam = %{ $metricsParams{ $metric } };
+    my %metrics = %{ $metrics };
+    foreach my $metric ( keys %metrics ){
+        my $metricId = $metric;
+        
+        my %metricParams = %{ $metrics{ $metric } };  # Drill down to list of metric properties
+        
+        print "\tMETRIC: $metricId: (", join( ", ", sort keys %{ $metrics{ $metric } } ), ")\n";
+        my %metricParam = %{ $metrics{ $metric } };
         foreach my $metricKey ( sort keys %metricParam ){  #  Actually only one key/value pair per parameter
             my $metricParamValue = $metricParam{ $metricKey };
             print "\t\t$metricKey  ", $metricParamValue, "\n";
@@ -164,6 +168,11 @@ if( defined( $metrics ) ){
             }
             
             elsif( $metricKey eq 'storage' ){
+            
+                #
+                #   The metric's storage parameter is a list (hash) of files and/or dbs and/or...
+                #   First, find out how many objects are present in the storage parameter.
+                #
                 my $filesJPath = '$.files.'.$metricParamValue;
                 print "\t\t\tLookup file using '$filesJPath'\n";
             

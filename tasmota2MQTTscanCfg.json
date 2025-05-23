@@ -53,61 +53,54 @@
             "xdata"  : "$.Time",
             "xformat" : "timedate",
             "storage" : {
-                "file" : "111_esp32_signal"
+                "file" : "111_esp32_signal",
+                "db"   : "esp32_signal"
             }
         }
     },
     
-    "files" : [
-        {
-            "111_esp01_signal" : {
-                "directory" : "/home/bomr/data/wifi_strength",
-                "basename"  : "111_esp01_signal"
-            }
+    "files" : {
+        "111_esp01_signal" : {
+            "directory" : "/home/bomr/data/wifi_strength",
+            "basename"  : "111_esp01_signal"
         },
-        {    
-            "111_esp32_signal" : {
-                "directory" : "/home/bomr/data/wifi_strength",
-                "basename"  : "111_esp32_signal"
-            }
+        
+        "111_esp32_signal" : {
+            "directory" : "/home/bomr/data/wifi_strength",
+            "basename"  : "111_esp32_signal"
         },
-        {
-            
-            "111_esp01_temperature" : {
-                "directory" : "/home/bomr/data/esp01_temperature",
-                "basename"  : "111_esp01_temperature"
-            } 
+
+        "111_esp01_temperature" : {
+            "directory" : "/home/bomr/data/esp01_temperature",
+            "basename"  : "111_esp01_temperature"
         }
-    ],
+    },
     
-    "dbs" : [
-        { 
-            "postgresql" : {
-                "database" : "111Home", 
-                "schema" : "111_signal",
-                "table"  : "111_esp01_signal",
-                "xcolumn" : "timedate",
-                "ycolumn" : "signal"
-            }
+    "dbs" : { 
+        "esp01_signal" : {
+            "dbms"     : "postgresql",
+            "database" : "111Home", 
+            "schema"   : "111_signal",
+            "table"    : "111_esp01_signal",
+            "xcolumn"  : "timedate",
+            "ycolumn"  : "signal"
         },
-        { 
-            "postgresql" : {
-                "database" : "111Home", 
-                "schema" : "111_signal",
-                "table"  : "111_esp32_signal",
-                "xcolumn" : "timedate",
-                "ycolumn" : "signal"
-            }
+        "esp32_signal" : {
+            "ddms"     : "postgresql", 
+            "database" : "111Home",
+            "schema"   : "111_signal",
+            "table"    : "111_esp32_signal",
+            "xcolumn"  : "timedate",
+            "ycolumn"  : "signal"
         },
-        {
-            "postgresql" : {
-                "database" : "111Home", 
-                "schema" : "111_temperature",
-                "table"  : "111_esp01_temperature",
-                "xcolumn" : "timedate",
-                "ycolumn" : "temperature"
-            }
+        "esp01_temperature" : {
+            "dbms"     : "postgresql",
+            "database" : "111Home", 
+            "schema"   : "111_temperature",
+            "table"    : "111_esp01_temperature",
+            "xcolumn"  : "timedate",
+            "ycolumn"  : "temperature"
         }
-    ]
+    }
 }
 
