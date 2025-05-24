@@ -56,17 +56,13 @@ my %optHelp = (
     open( LOGFILE, ">>$logfileSpec" ) || die "Cannot open $logfileSpec for writing : $!\n";
     print( LOGFILE '# Data log created by mqttClientTest $timeDateStamp\n"' );
     close( LOGFILE );
-
-    # die;
-    
     
     my $mqttClient = Net::MQTT::Simple->new( MQTT_BROKER_IP
                                             );
                                             
     $mqttClient->subscribe( MQTT_TOPIC, \&subscriptionHandler );
     $mqttClient->subscribe( 'RN_IoT/Heartbeat', \&subscriptionHandler );
-    
-    
+        
     #  Hmmm. how do we get this to run as a background thread...?
     $mqttClient->run();
 

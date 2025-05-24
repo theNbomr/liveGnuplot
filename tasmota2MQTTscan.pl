@@ -65,6 +65,7 @@ my $help = undef;
 my $verbose = undef;
 my $logBaseName = LOGFILE_BASENAME;
 my $logDirName = LOGFILE_DIRNAME;
+my $plotTitle = PLOT_TITLE;
 
 my $mqttClient = MQTT_CLIENT;
 my $mqttBroker = MQTT_BROKER;
@@ -82,6 +83,7 @@ my %optArgs = (
     "mqttTopic=s"   =>  \$mqttTopic,
     "mqttOptions=s" =>  \$mqttOptions,
     "mqttJPath=s"   =>  \$mqttJPath,
+    "plotTitle=s"   =>  \$plotTitle,
 );
 
 my %optHelp = (

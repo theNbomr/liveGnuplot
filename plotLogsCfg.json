@@ -1,0 +1,132 @@
+{
+    "Brokers" : [
+        {
+            "ID" :  "DellDeb8Wire",
+            "IP":   "192.168.0.19",
+            "Port": "19883"
+        },
+        {
+            "ID" :  "SurreyDellDeb11Air",
+            "IP":   "192.168.1.57",
+            "Port": "18883"
+        }
+    ]
+
+    ,
+    "//" : "===================================",
+    "//" : "Subscriptions : Non-empty list of subscriptions to make on the specified broker",
+    "//" : "===================================",
+    "Subscriptions" : [
+        {
+            "//" : "===================================",
+            "//" : "ID : Mandatory unique subscription name to uniquely identify this subscription",
+            "//" : "Subscription IDs may be used as references elsewhere in this file",
+            "//" : "===================================",
+            "ID" : "Settings3",
+
+            "//" : "===================================",
+            "//" : "Topic : Mandatory MQTT Broker name *REFERENCE*",
+            "//" : "Value must specify a Host-ID from the hosts list in this JSON file",
+            "//" : "===================================",
+            "Broker" : "DellDeb8Wire",
+
+            "//" : "===================================",
+            "//" : "Topic : Mandatory MQTT Topic name",
+            "//" : "===================================",
+            "Topic" : "RN_IOT_DAQ/D1Mini/Settings3",
+
+            "//" : "===================================",
+            "//" : "Payload : How to break down the received data", 
+            "//" : "===================================",
+            "Payload" : {
+                "Time" : {
+                    "InputFormat" : { 
+                        "datetime" : "%Y-%m-%dT%H:%M:%S" 
+                    },
+                    "OutputFormat" : { 
+                        "time" : "%H:%M:%S" 
+                    }
+                },
+                "Parameters" : [
+                    {
+                        "Var8": [
+                            { 
+                                "InputFormat" : { 
+                                    "real" : "%lf"
+                                },
+                                "OutputFormat" : {
+                                    "real" : "%lf" 
+                                }
+                            }
+                        ],
+                        "Var1": [
+                            { 
+                                "InputFormat" : { 
+                                    "int32" : "%d"
+                                },
+                                "OutputFormat" : {
+                                    "int32" : "%d" 
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "Log" : {
+                "Storage" : "ADS1115Tasmota",
+                "Time" : { 
+                    "Col" : 1, 
+                    "Format" : "%H:%M:%S" 
+                },
+                "Temperature" : { 
+                    "Col": 2, 
+                    "Format": "%7f" 
+                }
+            }
+        },
+        { 
+            "ID": "Temperature1",
+            "Host" : "SurreyDellDeb11Air",
+            "Topic" : "tele/tasmota_F74C1D/SENSOR"
+        }
+    ],
+
+    "Stores" : [
+        { 
+            "ID" : "ADS1115Tasmota",
+            "Logfile" : {
+                "Directory" : {
+                    "ASCII" : "/usr1",
+                    "date"   : "/%Y-%m-%d_",
+                    "ASCII" : "/ADS1115_A0",
+                    "ASCII" : ".log"
+                },
+                "FileName" : {
+                    "date"   : "%Y-%m-%d_",
+                    "ASCII" : "tasmotaD1Mini",
+                    "ASCII" : ".txt"
+                },
+                "ColumnSeparator" : " ",
+                "EoL" : "\n"
+            }
+        },
+        { 
+            "ID" : "NelbeLRTemperature",
+            "Logfile" : {
+                "Directory" : {
+                    "ASCII" : "/usr1",
+                    "date"   : "/%Y-%m-%d_",
+                    "ASCII" : "/DS18B20",
+                    "ASCII" : ".log"
+                },
+                "FileName" : {
+                    "date"   : "%Y-%m-%d_",
+                    "ASCII" : "ESP01-RN02",
+                    "ASCII" : ".txt"
+                },
+                "ColumnSeparator" : " ",
+                "EoL" : "\n"
+            }
+        }
+    ]
+}
