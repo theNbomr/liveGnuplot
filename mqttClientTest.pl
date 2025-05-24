@@ -64,12 +64,21 @@ my %optHelp = (
     $mqttClient->subscribe( 'RN_IoT/Heartbeat', \&subscriptionHandler );
         
     #  Hmmm. how do we get this to run as a background thread...?
-    $mqttClient->run();
+    # $mqttClient->run();
+    
+    # Maybe we just tight-loop, calling tick()...
+    while( 1 ){
+        $mqttClient->tick();    # Problem solved!!!
+        
+        #
+        #   Do other stuff...
+        #
+    }
 
                                             
 #
 #   This subroutine gets called asynchronously as a callback from the MQTT Client code.
-#   It gets called with two arguments: The MQTT topic and the MQTT Message
+#   It gets called with two arguments: The MQTT Topic and the MQTT Message
 #
 sub subscriptionHandler($$){
 
