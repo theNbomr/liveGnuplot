@@ -1,0 +1,38 @@
+#! /bin/bash
+
+if [ "$1" == "test" ]; then 
+	INDIRECT_ECHO=echo
+else
+	INDIRECT_ECHO=
+fi
+
+PERIOD=10
+
+now=11
+while [ $(( $now % ${PERIOD} )) != 0 ]; do 
+	sleep 0.5 
+	now=$( date "+%s" ) 
+	now=$(( ( $now - ( 3600 * 8 ) ) % 86400 )) 
+done
+
+while [ 1 ]; do 
+	now=$( date "+%s" ) 
+	now=$(( ( $now - ( 3600 * 8 ) ) % 86400 )) 
+	hh=$(( 100 + $now / 3600 ))
+	mm=$(( 100 + ( $now % 3600 ) / 60 ))
+	ss=$(( 100 + ( $now % 3600 ) % 60 ))
+	tod=$( printf "%02d:%02d:%02d" ${hh: -2} ${mm: -2} ${ss: -2} )
+
+	if [ "$1" == "test" ]; then
+		echo mosquitto_pub -h localhost -t 'RN_IoT/Heartbeat' -m ${tod} -r 
+		echo $now ${tod}
+	else
+		mosquitto_pub -h localhost -t 'RN_IoT/Heartbeat' -m ${tod} -r 
+	fi
+
+	sleep 9.99 
+done
+
+
+
+
