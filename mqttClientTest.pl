@@ -8,6 +8,10 @@ use Getopt::Long;
 sub subscriptionHandler($$);
 sub usage($$);
 
+#
+#   Change these constants to sane values for your installation. 
+#   This will probably allow your version to run without any commandline options.
+#
 use constant REVISION => "No Revision tags in Git VCS...";
 use constant MQTT_BROKER_IP => '192.168.1.100';
 use constant MQTT_BROKER_PORT => '1883';
@@ -16,19 +20,24 @@ use constant MQTT_TOPIC => 'tele/tasmota_F74C1D/SENSOR';
 use constant LOGFILE_DIR => '/home/bomr/tmp';
 use constant LOGFILE_BASENAME => 'junkRN';
 
-
 my @weekDays = ( "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" );
 
 my $help = undef;
 my $verbose = undef;
 my $logDir = LOGFILE_DIR;
 my $logBaseName = LOGFILE_BASENAME;
+my $mqttBrokerIp = MQTT_BROKER_IP;
+my $mqttBrokerPort = MQTT_BROKER_PORT;
+my $mqttTopic = MQTT_TOPIC;
 
 my %optArgs = (
     "help"          =>  \$help,
     "verbose"       =>  \$verbose,
     "logBaseName=s" =>  \$logBaseName,
     "dataLogDir=s"  =>  \$logDir,
+    "mqttBrokerIp=s"  =>  \$mqttBrokerIp,
+    "mqttBrokerPort=i" => \$mqttBrokerPort,
+    "mqttTopic=s"   => \$mqttTopic,
 );
 
 my %optHelp = (
@@ -36,9 +45,11 @@ my %optHelp = (
     "verbose"     =>  "Report activities to console",
     "logBaseName" =>  "base name of log files, without date prefix",
     "dataLogDir"  =>  "Where the data logs are stored",
+    "mqttBrokerIp" => "IP address or name of the MQTT broker",
+    "mqttBrokerPort" => "IP Port of the MQTT broker",
+    "mqttTopic"   =>  "MQTT Topic to subscribe to",
 );
 
-    
     GetOptions( %optArgs );
     if( defined( $help ) ){
         usage( \%optArgs, \%optHelp );
@@ -52,15 +63,22 @@ my %optHelp = (
     my $timeDateStamp = `date "+%Y-%m-%d_%H:%M"`;
     $timeDateStamp =~ s/\n//g;
     my $logfileSpec = "$logDir/$timeDateStamp"."_"."$logBaseName".".log";
-    print $logfileSpec,"\n";
+    if( $verbose ){
+        print $logfileSpec,"\n";
+    }
     open( LOGFILE, ">>$logfileSpec" ) || die "Cannot open $logfileSpec for writing : $!\n";
-    print( LOGFILE '# Data log created by mqttClientTest $timeDateStamp\n"' );
+    print( LOGFILE "# Data log created by $0 $timeDateStamp\n" );
     close( LOGFILE );
     
-    my $mqttClient = Net::MQTT::Simple->new( MQTT_BROKER_IP
+    #
+    #   How to use non-standard IP Port numbers...?
+    #
+    my %sockOptions = ( 'port' => $mqttBrokerPort );
+    my $mqttClient = Net::MQTT::Simple->new( $mqttBrokerIp.":$mqttBrokerPort"
+                                        #    , \%sockOptions 
                                             );
-                                            
-    $mqttClient->subscribe( MQTT_TOPIC, \&subscriptionHandler );
+                                        
+    $mqttClient->subscribe( $mqttTopic, \&subscriptionHandler );
     $mqttClient->subscribe( 'RN_IoT/Heartbeat', \&subscriptionHandler );
         
     #  Hmmm. how do we get this to run as a background thread...?
