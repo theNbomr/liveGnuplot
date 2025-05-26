@@ -15,11 +15,14 @@ use Getopt::Long;
     #   Prsently trying to follow the logic in
     #     <https://www.perlmonks.org/?node_id=654663>
     #
+    #   Maybe this exercise is better handled with the AnyEvent module/framework
+    #    <https://metacpan.org/pod/AnyEvent::MQTT>
+    #
     # =====================================================================
     
     #
     #   Build up two 'metric' objects. In the real use case,
-    #   these will be built up at runtime according to a JSON
+    #   arbitrary numbers of these will be built up at runtime according to a JSON
     #   notation config file.
     #
     print "======<metric1>=========\n";
@@ -110,12 +113,13 @@ my $callback = shift;
 #         "TempUnit":"C"
 #     }
 #
-sub handler($$){
+sub handler($$$){
+my $self = shift;
+
 # ----------------------------------------------------
 #   These are undefined when this sub is called 
 #   as a callback for an MQTT subscriber.
 # ----------------------------------------------------
-my $self = shift;
 my $topic = shift;
 my $message = shift;
 # my ($topic, $message) = @_;
