@@ -13,3 +13,5 @@ The _**tasmota2MQTTscan.pl**_ tool heavily exploits the JSON::Path module to all
 
     bomr@orangepi3:~/Util/Projects/liveGnuplot$ ./tasmota2MQTTscan.pl --mqttBroker='192.168.1.100' -mqttOptions="-v" --mqttTopic='tele/tasmota_F74C1D/SENSOR' --mqttJPath="$..Temperature" --verbose=1 --logDirName=/home/bomr/data
 
+This repository now contains code gragments that are working toward a generic MQTT scraper whihc will allow multiple MQTT brokers and/or MQTTTopics to be subscribed and logged to flat files (initially, compatible with gnuplot, for plotting). The main challenges in the code are parsing the JSON config file, establising MQTT subscriptions, and handling the data in callbacks from the MQTT CLient code (Net::MQTT:Simple). The latter is presetly the most challenging, requiring to get an Object instance callback subroutine to be used in the callback from Net::MQTT::Simple. 
+
