@@ -3,6 +3,25 @@ use strict;
 use Net::MQTT::Simple;
 use Getopt::Long;
 
+    # =====================================================================
+    #
+    #   This is testbed code to figure out how to get the 
+    #   object method for a 'metric' object to be used as the
+    #   callback from a Subscription event in an MQTT Client.
+    #   This is needed in order to allow the received message to 
+    #   be correctly associated with the instance data of the
+    #   metric, such a log file spec, parser directive, etc.
+    #
+    #   Prsently trying to follow the logic in
+    #     <https://www.perlmonks.org/?node_id=654663>
+    #
+    # =====================================================================
+    
+    #
+    #   Build up two 'metric' objects. In the real use case,
+    #   these will be built up at runtime according to a JSON
+    #   notation config file.
+    #
     print "======<metric1>=========\n";
     my $metric1 = metric->new( name => 'temperature',
                             logfile => '/tmp/temperature.log',
@@ -11,10 +30,6 @@ use Getopt::Long;
                              # mqttIp => '123.123.123.123:18883'
                              mqttIp => '207.216.254.31:18883'
                             );
-    print "Initializing MQTT Connections and subscriptions\n";
-    my $callback = sub{ $metric1->handler() };
-    my $mqttClient1 = $metric1->mqttClientInit( $callback );
-
     print "=======<metric2>========\n";
     my $metric2 = metric->new( name => 'heartbeat',
                             logfile => '/tmp/heartbeat.log',
@@ -22,8 +37,12 @@ use Getopt::Long;
                               ydata => '',
                              mqttIp => '192.168.1.100:1883'
                             );
+
     print "Initializing MQTT Connections and subscriptions\n";
-    $callback = sub{ $metric1->handler() };
+    my $callback = sub{ $metric1->handler() };
+    my $mqttClient1 = $metric1->mqttClientInit( $callback );
+
+    $callback = sub{ $metric2->handler() };
     my $mqttClient2 = $metric2->mqttClientInit( $callback );
     
     print "=======< busy wait calling tick() >======\n";
@@ -31,8 +50,8 @@ use Getopt::Long;
         $mqttClient1->tick();
         $mqttClient2->tick();
     }
-                            
 ;
+
 
 package metric;
 
@@ -42,7 +61,6 @@ my $proto = shift;
 my $class = ref( $proto ) || $proto;
 my $self = {};
 
-
     bless $self, $class;
 
     my %params = @_;
@@ -51,9 +69,6 @@ my $self = {};
         $self->{ $key } = $value;
         print "Key: $key, Value: $value\n";
     }
-    my $handler = sub{ $self->handler(); };
-    $self->{ 'CALLBACK' } = $handler;
-
     return $self;
 }
 
@@ -64,18 +79,18 @@ my $self = {};
 sub mqttClientInit {
 my $self = shift;
 my $callback = shift;
-my $ip = $self->{ mqttIp };
 
     #
     #   Connect to the specified broker.
     #
-    my $mqttClient = Net::MQTT::Simple->new( $ip );
+    my $mqttClient = Net::MQTT::Simple->new( $self->{ mqttIp } );
     
     #
     #   Create a subscription on the already connected broker,
     #   to the specified topic. The callback will be invoked
     #   on each new data event.
     #
+    my $ip    = $self->{ mqttIp };
     my $topic = $self->{ topic };
     print "Subscribing to $topic on broker '$ip'\n";
     $mqttClient->subscribe( $topic, $callback );
@@ -105,8 +120,8 @@ my $topic = shift;
 my $message = shift;
 # my ($topic, $message) = @_;
 
-    # print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\"\n";
-    print "Metric :: '$topic' : \"$message\"\n";
+    print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\"\n";
+    # print "Metric :: '$topic' : \"$message\"\n";
     
     my $filespec = $self->{ 'logfile' };
     open( LOG, ">>$filespec" ) || die "Cannot open $filespec for writing: $!\n";
