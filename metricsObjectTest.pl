@@ -41,11 +41,15 @@ use Getopt::Long;
                              mqttIp => '192.168.1.100:1883'
                             );
 
+    #
+    #   Somehow, this seems to work. See the following link to maybe help understand it...
+    #   <https://www.perlmonks.org/?node_id=654701>
+    #
     print "Initializing MQTT Connections and subscriptions\n";
-    my $callback = sub{ $metric1->handler() };
+    my $callback = $metric1->curry( 'handler' );
     my $mqttClient1 = $metric1->mqttClientInit( $callback );
 
-    $callback = sub{ $metric2->handler() };
+    $callback = $metric2->curry( 'handler' );
     my $mqttClient2 = $metric2->mqttClientInit( $callback );
     
     print "=======< busy wait calling tick() >======\n";
@@ -134,4 +138,12 @@ my $message = shift;
     return 2;
 }
 
+#
+#   This is some dark-assed voodoo majick
+#
+sub curry { 
+    my ($self, $method_name, @args) = @_;
+    my $method = $self->can($method_name) || die "No $method_name method found";
+    return sub { $self->$method(@args, @_) };
+}
 
