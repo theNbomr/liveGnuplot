@@ -19,5 +19,5 @@ This repository now contains code fragments that are working toward a generic MQ
  * establising MQTT subscriptions (now pretty well understood)
  * handling the data in callbacks from the MQTT CLient code (Net::MQTT:Simple).
  
-The latter is presently the most challenging, requiring to get an Object instance callback subroutine to be used in the callback from Net::MQTT::Simple. 
+The latter is presently the most challenging, requiring to get an Object instance callback subroutine to be used in the callback from Net::MQTT::Simple. [SOLVED]
 
