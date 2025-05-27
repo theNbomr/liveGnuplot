@@ -76,6 +76,11 @@ my $self = {};
         $self->{ $key } = $value;
         print "Key: $key, Value: $value\n";
     }
+    # Create a curried version of the object method 
+    # to use as a callback by non-object code
+    # RN does not really understand HOW this works,
+    # although I understand why it's needed.
+    $self->{ CALLBACK } = $self->curry( 'handler' );
     return $self;
 }
 
@@ -100,7 +105,7 @@ my $callback = shift;
     my $ip    = $self->{ mqttIp };
     my $topic = $self->{ topic };
     print "Subscribing to $topic on broker '$ip'\n";
-    $mqttClient->subscribe( $topic, $callback );
+    $mqttClient->subscribe( $topic, $self->{ CALLBACK } );
     return( $mqttClient );
 }
 
@@ -128,10 +133,9 @@ my $topic = shift;
 my $message = shift;
 # my ($topic, $message) = @_;
 
-    print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\"\n";
-    # print "Metric :: '$topic' : \"$message\"\n";
-    
     my $filespec = $self->{ 'logfile' };
+    print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $filespec\n";
+    
     open( LOG, ">>$filespec" ) || die "Cannot open $filespec for writing: $!\n";
     print( LOG "'$topic' : $message\n" );
     close( LOG );
@@ -139,11 +143,14 @@ my $message = shift;
 }
 
 #
-#   This is some dark-assed voodoo majick
+#   This is some dark-assed voodoo majick. 
+#   It allows an arbitrary non-object non-instance code 
+#   to make callbacks to the curried object method.
+#   See the links in the comments at the top of this file.
 #
 sub curry { 
-    my ($self, $method_name, @args) = @_;
-    my $method = $self->can($method_name) || die "No $method_name method found";
-    return sub { $self->$method(@args, @_) };
+    my ( $self, $method_name, @args ) = @_;
+    my $method = $self->can( $method_name ) || die "No $method_name method found";
+    return sub { $self->$method( @args, @_ ) };
 }
 
