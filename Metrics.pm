@@ -24,6 +24,37 @@ my $self = {};
 }
 
 #
+#   This is some dark-assed voodoo majick. 
+#   It allows an arbitrary non-object non-instance code 
+#   to make callbacks to the curried object method.
+#   See the links in the comments at the top of this file.
+#
+sub curry { 
+    my ( $self, $method_name, @args ) = @_;
+    my $method = $self->can( $method_name ) || die "No $method_name method found";
+    return sub { $self->$method( @args, @_ ) };
+}
+
+sub property($$){
+my $self = shift;
+my $property = shift;
+
+    if( @_ ){
+        $self->{$property} = @_;
+        return $self->{$property};
+    }
+    else{
+        if( exists( $self->{$property} ) ){
+            return( $self->{$property} );
+        }
+        else{
+            return undef;
+        }
+    }
+}
+
+
+#
 #   Establish a connection to the specified MQTT Broker, and then
 #   build a subscription to the specified topic on the connected broker.
 #
@@ -80,16 +111,4 @@ my $message = shift;
     close( LOG );
     return 2;
 }
-
-#
-#   This is some dark-assed voodoo majick. 
-#   It allows an arbitrary non-object non-instance code 
-#   to make callbacks to the curried object method.
-#   See the links in the comments at the top of this file.
-#
-sub curry { 
-    my ( $self, $method_name, @args ) = @_;
-    my $method = $self->can( $method_name ) || die "No $method_name method found";
-    return sub { $self->$method( @args, @_ ) };
-}
-
+1;

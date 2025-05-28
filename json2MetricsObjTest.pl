@@ -176,141 +176,79 @@ my %optHelp = (
     #   Find the JSON 'Metrics' Object list. 
     #   Iterate over each JSON Metric Object, creating Perl Metrics Objects.
     #
-
     if( defined( $metrics ) ){
-        if( $verbose ){
-            print "METRICS:\n";
-            print "\tRef:", ref( $metrics ), "\n";
-        }
-
-        if( $verbose ){
-            my @metricPropertyNames =   keys( %{ $metrics } );
-            my @metricProperties    = values( %{ $metrics } );
-            print scalar @metricPropertyNames, " Named Metrics:\n";
-            print "\t", join( ", ", @metricPropertyNames ), "\n";
-        }
         
         my %metrics = %{ $metrics };  # Dereference the HASHref
-        print "Metrics: ", join( ", ", values %metrics ),"\n";
-        my @metricProperties = values %metrics;
-        foreach my $metricProperty ( @metricProperties ){
-            my %metricProperty = %{ $metricProperty };
-            foreach my $propertyName ( keys %metricProperty ){   # Should be one key/value pair
-                print "PropertyName : $propertyName, PropertyValue: ", $metricProperty{ $propertyName },"\n";
-                
-            }
+
+        if( $verbose ){
+            my @metricIds =   keys( %{ $metrics } );
+            my @metrics     = values( %{ $metrics } );
+            print scalar @metricIds, " Named Metrics:\n";
+            print "\t", join( ", ", @metricIds ), "\n\n";
         }
-        
-        #
-        #   This should have one Key with a HASHref value that will
-        #   resolve to a list of metrics, each named by its hash key.
-        #
-        foreach my $metric ( keys %metrics ){
-        
-            my $metricId = $metric;
-            my $metricObj = Metrics->new( name => $metricId );
-            $metrics{ $metricId } = $metricObj;
 
-            my %metricParams = %{ $metrics{ $metric } };  # Drill down to list of metric properties
-            
-            if( $verbose ){
-                print "\tMETRIC: $metricId: (", join( ", ", sort keys %{ $metrics{ $metric } } ), ")\n";
-            }
-            
-            my %metricParam = %{ $metrics{ $metric } };
-            
-            foreach my $metricKey ( sort keys %metricParam ){  #  Actually only one key/value pair per parameter
+        foreach my $metricId ( keys( %{ $metrics } ) ){
+            my $metric = $metrics->{ $metricId };
 
-                my $metricParamValue = $metricParam{ $metricKey };
+            $metrics{ $metricId } = Metrics->new( 'name' => $metricId );
+
+            foreach my $propertyName ( keys %{ $metric } ){
+                my $propertyVal = $metric->{ $propertyName };
+
                 if( $verbose ){
-                    print "\t\t$metricKey  ", $metricParamValue, "\n";
-                }
-                $metricObj->param( $metricKey, $metricParamValue );
-                
-                if( $metricKey eq 'broker' ){
-#                     my $brokerJPath = '$.mqtt_brokers.'.$metricParamValue;
-#                     if( $verbose ){
-#                         print "\t\t\tLookup broker using '$brokerJPath'\n";
-#                     }
-#                     
-#                     
-#                       Do a lookup of the specified parameter
-#                     
-#                     my $brokerPath = JSON::Path->new( $brokerJPath );
-#                     my $brokerObject = $brokerPath->value( $jsonText );
-#                     
-#                     
-#                       brokerObject --> a specific broker...??
-#                     
-#                     if( defined( $brokerObject ) ){
-#                         if( $verbose ){
-#                             print "\t\t\tbroker Object: $brokerObject\n";
-#                         }
-#                         
-#                         
-#                           A broker should be a HASH reference.
-#                           Extract all of the has elements, which will be the 
-#                           properties of the broker and their respective property values.
-#                         
-#                         if( 'HASH' eq ref( $brokerObject ) ){
-#                             if( $verbose ){
-#                                 print "\t\t\tFound a broker object referenced by $brokerObject\n";
-#                             }
-#                             
-#                             get the names and values of all broker properties
-#                             my %broker = %{ $brokerObject };
-#                             if( $verbose ){
-#                                 foreach my $brokerProperty ( sort keys %broker ){
-#                                     print "\t\t\t\tbroker $brokerProperty : $broker{ $brokerProperty }\n";
-#                                 }
-#                             }
-#                         }
-#                     }
-#                     else{
-#                         print STDERR "No broker object '$metricParamValue' found\n";
-#                     }
-                }
-                
-                elsif( $metricKey eq 'storage' ){
-                
-                    #
-                    #   The metric's storage parameter is a list (hash) of files and/or dbs and/or...
-                    #   First, find out how many objects are present in the storage parameter.
-                    #
-                    my $filesJPath = '$.files.'.$metricParamValue;
-                    print "\t\t\tLookup file using '$filesJPath'\n";
-                
-                    #
-                    #   Do a lookup of the specified parameter
-                    #
-                    my $filesPath = JSON::Path->new( $filesJPath );
-                    my $fileObject = $filesPath->value( $jsonText );
-                    if( defined( $fileObject ) ){
-                        print "\t\t\tfile Object: $fileObject\n";
-                        if( 'HASH' eq ref( $fileObject ) ){
-                            print "\t\t\tFound a file object referenced by $fileObject\n";
-                            
-                            # get the names and values of all broker parameters
-                            my %file = %{ $fileObject };
-                            foreach my $fileProperty ( sort keys %file ){
-                                print "\t\t\t\tbroker $fileProperty : $file{ $fileProperty }\n";
-                            }
-                        }
+                    print "metricId: $metricId, ";
+                    if( ref( $propertyVal ) ){
+                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
                     }
-                    else{
-                        print "No file object '$metricParamValue' found\n";
+                    else{ 
+                        print "Property Name: $propertyName, Val: $propertyVal\n";
                     }
                 }
-            }                
+                $metrics{ $metricId }->property( $propertyName => $propertyVal );
+            }
+            print "\n";
         }
     }
-    else{
-        print "METRICS undefined\n";
-    }
+    
+         
+    #   
+    #   Find the JSON 'Metrics' Object list. 
+    #   Iterate over each JSON Metric Object, creating Perl Metrics Objects.
+    #
+    if( defined( $brokers ) ){
         
-    
+        my %brokers = %{ $brokers };  # Dereference the HASHref
 
+        if( $verbose ){
+            my @brokerIds =   keys( %{ $brokers } );
+            my @brokers   = values( %{ $brokers } );
+            print scalar @brokerIds, " Named Brokers:\n";
+            print "\t", join( ", ", @brokerIds ), "\n\n";
+        }
+
+        foreach my $brokerId ( keys( %{ $brokers } ) ){
+            my $broker = $brokers->{ $brokerId };
+
+            $metrics{ $brokerId } = Brokers->new( 'name' => $brokerId );
+
+            foreach my $propertyName ( keys %{ $broker } ){
+                my $propertyVal = $broker->{ $propertyName };
+
+                if( $verbose ){
+                    print "brokerId: $brokerId, ";
+                    if( ref( $propertyVal ) ){
+                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                    }
+                    else{ 
+                        print "Property Name: $propertyName, Val: $propertyVal\n";
+                    }
+                }
+            }
+            print "\n";
+        }
+    }
     
+exit( 0 );
     
 
 sub usage($$){

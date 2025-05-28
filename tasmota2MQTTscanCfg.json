@@ -5,6 +5,47 @@
         "comment_2" : "2025-May-20 RN thenbomr@gmail.com"
     },
     
+    "metrics" : { 
+        "111_esp01_temperature" : {
+            "broker" : "orangepi3",
+            "topic"  : "tele/tasmota_F74C1D/SENSOR",
+            "ydata"  : "$.DS18B20.Temperature",
+            "yformat" : "number",
+            "xdata"  : "$.Time",
+            "xformat" : "timedate",
+            "storage" : [
+                    { "file" : "111_esp01_temperature" },
+                    { "db"   : "esp01_temperature" }
+            ]
+        },
+        
+        "111_esp01_signal" : {
+            "broker" : "orangepi3",
+            "topic"  : "tele/tasmota_F74C1D/STATE",
+            "ydata"  : "$.Wifi.Signal",
+            "yformat" : "number",
+            "xdata"  : "$.Time",
+            "xformat" : "timedate",
+            "storage" : [
+                { "file" : "111_esp01_signal" }
+            ]
+
+        },
+        
+        "111_esp32_signal" : {
+            "broker" : "orangepi3",
+            "topic"  : "tele/tasmota_F74C1D/STATE",
+            "ydata"  : "$.Wifi.Signal",
+            "yformat" : "number",
+            "xdata"  : "$.Time",
+            "xformat" : "timedate",
+            "storage" : [
+                { "file" : "111_esp32_signal" },
+                { "db"   : "esp32_signal" }
+            ]
+        }
+    },
+    
     "mqtt_brokers" : { 
         "delldeb8" : {
             "ip": "192.168.0.19",
@@ -17,45 +58,6 @@
         "orangepi3" : {
             "ip":"192.68.1.100",
             "port" : "18883"
-        }
-    },
-    
-    "metrics" : { 
-        "111_esp01_temperature" : {
-            "broker" : "orangepi3",
-            "topic"  : "tele/tasmota_F74C1D/SENSOR",
-            "ydata"  : "$.DS18B20.Temperature",
-            "yformat" : "number",
-            "xdata"  : "$.Time",
-            "xformat" : "timedate",
-            "storage" : {
-                "file" : "111_esp01_temperature"
-            }
-        },
-        
-        "111_esp01_signal" : {
-            "broker" : "orangepi3",
-            "topic"  : "tele/tasmota_F74C1D/STATE",
-            "ydata"  : "$.Wifi.Signal",
-            "yformat" : "number",
-            "xdata"  : "$.Time",
-            "xformat" : "timedate",
-            "storage" : {
-                "file" : "111_esp01_signal"
-            }
-        },
-        
-        "111_esp32_signal" : {
-            "broker" : "orangepi3",
-            "topic"  : "tele/tasmota_F74C1D/STATE",
-            "ydata"  : "$.Wifi.Signal",
-            "yformat" : "number",
-            "xdata"  : "$.Time",
-            "xformat" : "timedate",
-            "storage" : {
-                "file" : "111_esp32_signal",
-                "db"   : "esp32_signal"
-            }
         }
     },
     
