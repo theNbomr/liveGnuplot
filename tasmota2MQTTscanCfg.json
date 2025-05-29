@@ -33,7 +33,7 @@
         },
         
         "111_esp32_signal" : {
-            "broker" : "orangepi3",
+            "broker" : "orangepi3xxx",
             "topic"  : "tele/tasmota_F74C1D/STATE",
             "ydata"  : "$.Wifi.Signal",
             "yformat" : "number",

@@ -99,30 +99,30 @@ use constant LOGFILE_BASENAME => 'junkRN';
 
 my $help = undef;
 my $verbose = undef;
-my $logDir = LOGFILE_DIR;
-my $logBaseName = LOGFILE_BASENAME;
-my $mqttBrokerIp = MQTT_BROKER_IP;
-my $mqttBrokerPort = MQTT_BROKER_PORT;
-my $mqttTopic = MQTT_TOPIC;
+# my $logDir = LOGFILE_DIR;
+# my $logBaseName = LOGFILE_BASENAME;
+# my $mqttBrokerIp = MQTT_BROKER_IP;
+# my $mqttBrokerPort = MQTT_BROKER_PORT;
+# my $mqttTopic = MQTT_TOPIC;
 
 my %optArgs = (
     "help"          =>  \$help,
     "verbose"       =>  \$verbose,
-    "logBaseName=s" =>  \$logBaseName,
-    "dataLogDir=s"  =>  \$logDir,
-    "mqttBrokerIp=s"  =>  \$mqttBrokerIp,
-    "mqttBrokerPort=i" => \$mqttBrokerPort,
-    "mqttTopic=s"   => \$mqttTopic,
+    # "logBaseName=s" =>  \$logBaseName,
+    # "dataLogDir=s"  =>  \$logDir,
+    # "mqttBrokerIp=s"  =>  \$mqttBrokerIp,
+    # "mqttBrokerPort=i" => \$mqttBrokerPort,
+    # "mqttTopic=s"   => \$mqttTopic,
 );
 
 my %optHelp = (
     "help"        =>  "This helpful message",
     "verbose"     =>  "Report activities to console",
-    "logBaseName" =>  "base name of log files, without date prefix",
-    "dataLogDir"  =>  "Where the data logs are stored",
-    "mqttBrokerIp" => "IP address or name of the MQTT broker",
-    "mqttBrokerPort" => "IP Port of the MQTT broker",
-    "mqttTopic"   =>  "MQTT Topic to subscribe to",
+    # "logBaseName" =>  "base name of log files, without date prefix",
+    # "dataLogDir"  =>  "Where the data logs are stored",
+    # "mqttBrokerIp" => "IP address or name of the MQTT broker",
+    # "mqttBrokerPort" => "IP Port of the MQTT broker",
+    # "mqttTopic"   =>  "MQTT Topic to subscribe to",
 );
 
 
@@ -194,11 +194,10 @@ my %optHelp = (
         foreach my $brokerId ( keys( %{ $brokers } ) ){
             my $broker = $brokers->{ $brokerId };
             $brokers{ $brokerId } = Brokers->new( 'name' => $brokerId );
-            print "Broker Obj: ", $brokers{ $brokerId },"\n";
+
             if( $verbose ){
                 print "Broker ID: $brokerId\n";
-                my $validatorBroker = $brokers{ $brokerId };
-
+                print "Broker Obj: ", $brokers{ $brokerId },"\n";
                 print "Lookup: ", $brokers{ $brokerId }->property( 'name' ),"\n";
             }
 
@@ -321,16 +320,56 @@ my %optHelp = (
                     # 
                     # Lookup/validate specified broker
                     #
-                    print "Validating broker '$propertyVal\n";
+                    print "Validating broker '$propertyVal ... ";
                     if( exists( $brokers{ $propertyVal } ) ){
                         print " +++ \n";
                     }
                     else{
-                        print "Error: No such broker defined $propertyVal \n";
+                        print "\nError: No such broker '$propertyVal'\n";
                         print "Brokers: ", join( ", ", keys( %brokers ), ),"\n";
+                        next;
                     }
                 }
+                elsif( $propertyName eq 'store'){
+                    my @metricStores = @{ $propertyVal };
+                    foreach my $metricStore ( @metricStores ){
+                        my %storeProperties = %{ $metricStore };
+                        print "Metric Store: ", join( ", ", keys %{ $metricStore } ),"\n";
 
+                        if( exists( $storeProperties{ 'file' } ) ){
+
+                            if( exists( $files{ $storeProperties{ 'file' } } ) ){
+                                print " +++ \n";
+                                last;
+                            }
+                            else{
+                                print "\nError: No such file '$storeProperties{ 'file' }'\n";
+                                next;
+                            }
+                        }
+                        elsif( exists( $storeProperties{ 'db' } ) ){
+
+                            if( exists( $files{ $storeProperties{ 'db' } } ) ){
+                                print " +++ \n";
+                                last;
+                            }
+                            else{
+                                print "\nError: No such file '$storeProperties{ 'db' }'\n";
+                                next;
+                            }
+                        }
+
+                        print "Validating store '$propertyVal ... ";
+                        if( exists( $files{ $propertyVal } ) || 
+                            exists(   $dbs{ $propertyVal } )   ){
+                        }
+                        else{
+                            print "\nError: No such store '$propertyVal'\n";
+                            print "Brokers: ", join( ", ", keys( %files ) ), ", ", join( ", ", keys( %dbs ) ),"\n";
+                            next;
+                        }
+                    }
+                }
 
                 if( $verbose ){
                     print "metricId: $metricId, ";
