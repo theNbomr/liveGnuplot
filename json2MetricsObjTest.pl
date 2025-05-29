@@ -8,8 +8,8 @@ use Getopt::Long;
 use lib ".";
 use Metrics;
 use Brokers;
-# use Files;
-# use DBs;
+use Files;
+use Dbs;
 
 
 sub usage($$);
@@ -42,15 +42,16 @@ sub usage($$);
 #                                               and becomes a Perl Object with name <==> key. The value of 
 #                                           the HASH is a series of HASHes (by reference), each one with a named property 
 #                                           and a value.
-#             "broker"  : "orangepi3",  
+#             "broker"  : "orangepi3",  <== BrokerId mustr match a Broker top-level ID
 #             "topic"   : "tele/tasmota_F74C1D/SENSOR",
 #             "ydata"   : "$.DS18B20.Temperature",
 #             "yformat" : "number",
 #             "xdata"   : "$.Time",
 #             "xformat" : "timedate",
-#             "storage" : {
-#                 "file" : "111_esp01_temperature"
-#             }
+#             "store" : [
+#                 { "file" : "111_esp01_temperature" }  <== Each Store Object must match the 
+#                                                         File/Db Id in the respective top-level section
+#             ]
 #         },
 #         
 #         "111_esp01_signal" : {
@@ -60,9 +61,9 @@ sub usage($$);
 #             "yformat" : "number",
 #             "xdata"  : "$.Time",
 #             "xformat" : "timedate",
-#             "storage" : {
-#                 "file" : "111_esp01_signal"
-#             }
+#             "store" : [
+#                 { "file" : "111_esp01_signal" }
+#             ]
 #         },
 #         
 #         "111_esp32_signal" : {
@@ -72,10 +73,10 @@ sub usage($$);
 #             "yformat" : "number",
 #             "xdata"  : "$.Time",
 #             "xformat" : "timedate",
-#             "storage" : {
-#                 "file" : "111_esp32_signal",
-#                 "db"   : "esp32_signal"
-#             }
+#             "store" : [
+#                 { "file" : "111_esp32_signal" },
+#                 { "db"   : "esp32_signal" }
+#             ]
 #         }
 #     },
 # 
@@ -86,6 +87,7 @@ sub usage($$);
 #   This will probably allow your version to run without any commandline options.
 #
 use constant REVISION => "No Revision tags in Git VCS...";
+
 use constant MQTT_BROKER_IP => '192.168.1.100';
 use constant MQTT_BROKER_PORT => '1883';
 use constant MQTT_TOPIC => 'tele/tasmota_F74C1D/SENSOR';
@@ -93,7 +95,7 @@ use constant MQTT_TOPIC => 'tele/tasmota_F74C1D/SENSOR';
 use constant LOGFILE_DIR => '/home/bomr/tmp';
 use constant LOGFILE_BASENAME => 'junkRN';
 
-my @weekDays = ( "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" );
+# my @weekDays = ( "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" );
 
 my $help = undef;
 my $verbose = undef;
@@ -160,10 +162,13 @@ my %optHelp = (
     my $metricsPath = JSON::Path->new( '$.metrics' );
     my $brokersPath = JSON::Path->new( '$.mqtt_brokers' );
     my $filesPath   = JSON::Path->new( '$.files' );
+    my $DBsPath     = JSON::Path->new( '$.dbs' );
+
 
     my $metrics = $metricsPath->value( $jsonText );
     my $brokers = $brokersPath->value( $jsonText );
     my $files   = $filesPath->value( $jsonText );
+    my $dbs     = $DBsPath->value( $jsonText );
 
     # Populate these hashes to allow us to find named objects after
     # the JSON data has been fully parsed.
@@ -172,6 +177,123 @@ my %optHelp = (
     my %files;
     my %dbs;
     
+         
+    #   
+    #   Find the JSON 'Metrics' Object list. 
+    #   Iterate over each JSON Metric Object, creating Perl Metrics Objects.
+    #
+    if( defined( $brokers ) ){
+        
+        if( $verbose ){
+            my @brokerIds =   keys( %{ $brokers } );
+            my @brokers   = values( %{ $brokers } );
+            print scalar @brokerIds, " Named Brokers:\n";
+            print "\t", join( ", ", @brokerIds ), "\n\n";
+        }
+
+        foreach my $brokerId ( keys( %{ $brokers } ) ){
+            my $broker = $brokers->{ $brokerId };
+            $brokers{ $brokerId } = Brokers->new( 'name' => $brokerId );
+            print "Broker Obj: ", $brokers{ $brokerId },"\n";
+            if( $verbose ){
+                print "Broker ID: $brokerId\n";
+                my $validatorBroker = $brokers{ $brokerId };
+
+                print "Lookup: ", $brokers{ $brokerId }->property( 'name' ),"\n";
+            }
+
+            foreach my $propertyName ( keys %{ $broker } ){
+                my $propertyVal = $broker->{ $propertyName };
+
+                if( $verbose ){
+                    print "brokerId: $brokerId, ";
+                    if( ref( $propertyVal ) ){
+                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                    }
+                    else{ 
+                        print "Property Name: $propertyName, Val: $propertyVal\n";
+                    }
+                }
+            }
+            print "\n";
+        }
+    }
+
+    #   
+    #   Find the JSON 'DBs' Object list. 
+    #   Iterate over each JSON  Object, creating Perl db Objects.
+    #
+    if( defined( $dbs ) ){
+        
+        my %dbs = %{ $dbs };  # Dereference the HASHref
+
+        if( $verbose ){
+            my @dbIds =   keys( %{ $dbs } );
+            my @dbs   = values( %{ $dbs } );
+            print scalar @dbIds, " Named Dbs:\n";
+            print "\t", join( ", ", @dbIds ), "\n\n";
+        }
+
+        foreach my $dbId ( keys( %{ $dbs } ) ){
+            my $db = $dbs->{ $dbId };
+
+            $dbs{ $dbId } = Dbs->new( 'name' => $dbId );
+
+            foreach my $propertyName ( keys %{ $db } ){
+                my $propertyVal = $db->{ $propertyName };
+
+                if( $verbose ){
+                    print "dbId: $dbId, ";
+                    if( ref( $propertyVal ) ){
+                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                    }
+                    else{ 
+                        print "Property Name: $propertyName, Val: $propertyVal\n";
+                    }
+                }
+            }
+            print "\n";
+        }
+    }
+    
+    #   
+    #   Find the JSON 'files' Object list. 
+    #   Iterate over each JSON  Object, creating Perl File Objects.
+    #
+    if( defined( $files ) ){
+        
+        my %files = %{ $files };  # Dereference the HASHref
+
+        if( $verbose ){
+            my @fileIds =   keys( %{ $files } );
+            my @files   = values( %{ $files } );
+            print scalar @fileIds, " Named Files:\n";
+            print "\t", join( ", ", @fileIds ), "\n\n";
+        }
+
+        foreach my $fileId ( keys( %{ $files } ) ){
+            my $file = $files->{ $fileId };
+
+            $files{ $fileId } = Files->new( 'name' => $fileId );
+
+            foreach my $propertyName ( keys %{ $file } ){
+                my $propertyVal = $file->{ $propertyName };
+
+                if( $verbose ){
+                    print "dbId: $fileId, ";
+                    if( ref( $propertyVal ) ){
+                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                    }
+                    else{ 
+                        print "Property Name: $propertyName, Val: $propertyVal\n";
+                    }
+                }
+            }
+            print "\n";
+        }
+    }
+
+
     #   
     #   Find the JSON 'Metrics' Object list. 
     #   Iterate over each JSON Metric Object, creating Perl Metrics Objects.
@@ -193,7 +315,22 @@ my %optHelp = (
             $metrics{ $metricId } = Metrics->new( 'name' => $metricId );
 
             foreach my $propertyName ( keys %{ $metric } ){
+
                 my $propertyVal = $metric->{ $propertyName };
+                if( $propertyName eq 'broker' ){
+                    # 
+                    # Lookup/validate specified broker
+                    #
+                    print "Validating broker '$propertyVal\n";
+                    if( exists( $brokers{ $propertyVal } ) ){
+                        print " +++ \n";
+                    }
+                    else{
+                        print "Error: No such broker defined $propertyVal \n";
+                        print "Brokers: ", join( ", ", keys( %brokers ), ),"\n";
+                    }
+                }
+
 
                 if( $verbose ){
                     print "metricId: $metricId, ";
@@ -205,44 +342,6 @@ my %optHelp = (
                     }
                 }
                 $metrics{ $metricId }->property( $propertyName => $propertyVal );
-            }
-            print "\n";
-        }
-    }
-    
-         
-    #   
-    #   Find the JSON 'Metrics' Object list. 
-    #   Iterate over each JSON Metric Object, creating Perl Metrics Objects.
-    #
-    if( defined( $brokers ) ){
-        
-        my %brokers = %{ $brokers };  # Dereference the HASHref
-
-        if( $verbose ){
-            my @brokerIds =   keys( %{ $brokers } );
-            my @brokers   = values( %{ $brokers } );
-            print scalar @brokerIds, " Named Brokers:\n";
-            print "\t", join( ", ", @brokerIds ), "\n\n";
-        }
-
-        foreach my $brokerId ( keys( %{ $brokers } ) ){
-            my $broker = $brokers->{ $brokerId };
-
-            $metrics{ $brokerId } = Brokers->new( 'name' => $brokerId );
-
-            foreach my $propertyName ( keys %{ $broker } ){
-                my $propertyVal = $broker->{ $propertyName };
-
-                if( $verbose ){
-                    print "brokerId: $brokerId, ";
-                    if( ref( $propertyVal ) ){
-                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
-                    }
-                    else{ 
-                        print "Property Name: $propertyName, Val: $propertyVal\n";
-                    }
-                }
             }
             print "\n";
         }

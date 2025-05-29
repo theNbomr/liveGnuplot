@@ -13,7 +13,7 @@
             "yformat" : "number",
             "xdata"  : "$.Time",
             "xformat" : "timedate",
-            "storage" : [
+            "store" : [
                     { "file" : "111_esp01_temperature" },
                     { "db"   : "esp01_temperature" }
             ]
@@ -26,7 +26,7 @@
             "yformat" : "number",
             "xdata"  : "$.Time",
             "xformat" : "timedate",
-            "storage" : [
+            "store" : [
                 { "file" : "111_esp01_signal" }
             ]
 
@@ -39,7 +39,7 @@
             "yformat" : "number",
             "xdata"  : "$.Time",
             "xformat" : "timedate",
-            "storage" : [
+            "store" : [
                 { "file" : "111_esp32_signal" },
                 { "db"   : "esp32_signal" }
             ]

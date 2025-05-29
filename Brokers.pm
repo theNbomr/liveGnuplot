@@ -14,10 +14,11 @@ my $self = {};
         $self->{ $key } = $value;
         print "Key: $key, Value: $value\n";
     }
+    return $self
 }
 
 
-sub param($$){
+sub property($$){
 my $self = shift;
 my $property = shift;
 
