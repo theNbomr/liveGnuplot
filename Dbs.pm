@@ -12,7 +12,9 @@ my $self = {};
     foreach my $key ( keys %params ){
         my $value = $params{ $key };
         $self->{ $key } = $value;
-        print "Key: $key, Value: $value\n";
+        if( $verbose ){
+            print "dbs: Key: $key, Value: $value\n";
+        }
     }
     return( $self );
 }

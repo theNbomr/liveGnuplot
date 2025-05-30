@@ -12,6 +12,7 @@ use Files;
 use Dbs;
 
 
+sub debugPrint;
 sub usage($$);
 
 # ============================================================================
@@ -137,9 +138,7 @@ my %optHelp = (
         exit( 0 );
     }
 
-    if( $verbose ){
-        print REVISION,"\n";
-    }
+    debugPrint REVISION,"\n";
 
     #
     #  Grab a whole file as specified on commandline
@@ -151,9 +150,7 @@ my %optHelp = (
 
     for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
         if( $jsonText[ $i ] =~ m/^\s*#/ ){
-            if( $verbose ){
-                print "Removing line " ,$i+$j, " :$jsonText[$i]";
-            }
+            debugPrint( "Removing line " ,$i+$j, " :$jsonText[$i]" );
             splice( @jsonText, $i, 1 );
             $jsonLines--;
             $i--;
@@ -165,9 +162,7 @@ my %optHelp = (
 
     # Convert the array data to a string 
     my $jsonText = join( "", @jsonText );
-    if( $verbose ){
-        print $jsonText;
-    }
+    debugPrint $jsonText;
 
     # NOTE: literal strings expressing a JSON Path contain '$', and 
     # therefore must be crafted as single-quoted strings to 
@@ -201,34 +196,32 @@ my %optHelp = (
         if( $verbose ){
             my @brokerIds =   keys( %{ $brokers } );
             my @brokers   = values( %{ $brokers } );
-            print scalar @brokerIds, " Named Brokers:\n";
-            print "\t", join( ", ", @brokerIds ), "\n\n";
+            debugPrint scalar @brokerIds, " Named Brokers:\n";
+            debugPrint "\t", join( ", ", @brokerIds ), "\n\n";
         }
 
         foreach my $brokerId ( keys( %{ $brokers } ) ){
             my $broker = $brokers->{ $brokerId };
             $brokerObjs{ $brokerId } = Brokers->new( 'name' => $brokerId );
 
-            if( $verbose ){
-                print "Broker ID: $brokerId\n";
-                print "Broker Obj: ", $brokerObjs{ $brokerId },"\n";
-                print "Lookup: ", $brokerObjs{ $brokerId }->property( 'name' ),"\n";
-            }
+            debugPrint "Broker ID: $brokerId\n";
+            debugPrint "Broker Obj: ", $brokerObjs{ $brokerId },"\n";
+            debugPrint "Lookup: ", $brokerObjs{ $brokerId }->property( 'name' ),"\n";
 
             foreach my $propertyName ( keys %{ $broker } ){
                 my $propertyVal = $broker->{ $propertyName };
 
                 if( $verbose ){
-                    print "brokerId: $brokerId, ";
+                    debugPrint "brokerId: $brokerId, ";
                     if( ref( $propertyVal ) ){
-                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                        debugPrint "Property '$propertyName' not a SCALAR: $propertyVal\n";
                     }
                     else{ 
-                        print "Property Name: $propertyName, Val: $propertyVal\n";
+                        debugPrint "Property Name: $propertyName, Val: $propertyVal\n";
                     }
                 }
             }
-            print "\n";
+            debugPrint "\n";
         }
     }
 
@@ -241,8 +234,8 @@ my %optHelp = (
         if( $verbose ){
             my @dbIds =   keys( %{ $dbs } );
             my @dbs   = values( %{ $dbs } );
-            print scalar @dbIds, " Named Dbs:\n";
-            print "\t", join( ", ", @dbIds ), "\n\n";
+            debugPrint scalar @dbIds, " Named Dbs:\n";
+            debugPrint "\t", join( ", ", @dbIds ), "\n\n";
         }
 
         foreach my $dbId ( keys( %{ $dbs } ) ){    # Iterate on DB Ids
@@ -254,16 +247,16 @@ my %optHelp = (
                 my $propertyVal = $db->{ $propertyName };
 
                 if( $verbose ){
-                    print "dbId: $dbId, ";
+                    debugPrint "dbId: $dbId, ";
                     if( ref( $propertyVal ) ){
-                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                        debugPrint "Property '$propertyName' not a SCALAR: $propertyVal\n";
                     }
                     else{ 
-                        print "Property Name: $propertyName, Val: $propertyVal\n";
+                        debugPrint "Property Name: $propertyName, Val: $propertyVal\n";
                     }
                 }
             }
-            print "\n";
+            debugPrint "\n";
         }
     }
     
@@ -276,8 +269,8 @@ my %optHelp = (
         if( $verbose ){
             my @fileIds =   keys( %{ $files } );
             my @files   = values( %{ $files } );
-            print scalar @fileIds, " Named Files:\n";
-            print "\t", join( ", ", @fileIds ), "\n\n";
+            debugPrint scalar @fileIds, " Named Files:\n";
+            debugPrint "\t", join( ", ", @fileIds ), "\n\n";
         }
 
         foreach my $fileId ( keys( %{ $files } ) ){
@@ -289,16 +282,16 @@ my %optHelp = (
                 my $propertyVal = $file->{ $propertyName };
 
                 if( $verbose ){
-                    print "dbId: $fileId, ";
+                    debugPrint "dbId: $fileId, ";
                     if( ref( $propertyVal ) ){
-                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                        debugPrint "Property '$propertyName' not a SCALAR: $propertyVal\n";
                     }
                     else{ 
-                        print "Property Name: $propertyName, Val: $propertyVal\n";
+                        debugPrint "Property Name: $propertyName, Val: $propertyVal\n";
                     }
                 }
             }
-            print "\n";
+            debugPrint "\n";
         }
     }
 
@@ -313,32 +306,32 @@ my %optHelp = (
         if( $verbose ){
             my @metricIds =   keys( %{ $metrics } );
             my @metrics   = values( %{ $metrics } );
-            print scalar @metricIds, " Named Metrics:\n";
-            print "\t", join( ", ", @metricIds ), "\n\n";
+            debugPrint scalar @metricIds, " Named Metrics:\n";
+            debugPrint "\t", join( ", ", @metricIds ), "\n\n";
         }
 
         foreach my $metricId ( keys( %{ $metrics } ) ){
             my $metric = $metrics->{ $metricId };
-            print "---------- $metricId ----------\n";
+            debugPrint "---------- $metricId ----------\n";
 
             $metricObjs{ $metricId } = Metrics->new( 'name' => $metricId );
 
             foreach my $propertyName ( keys %{ $metric } ){
 
                 my $propertyVal = $metric->{ $propertyName };
-                # print "Metric Property name: $propertyName, val: $propertyVal\n";
+                # debugPrint "Metric Property name: $propertyName, val: $propertyVal\n";
 
                 if( $propertyName eq 'broker' ){
                     # 
                     # Lookup/validate specified broker
                     #
-                    print "Validating broker '$propertyVal ... ";
+                    debugPrint "Validating broker '$propertyVal ... ";
                     if( exists( $brokerObjs{ $propertyVal } ) ){
-                        print " checks out\n";
+                        debugPrint " checks out\n";
                     }
                     else{
-                        print "\nError: No such broker '$propertyVal'\n";
-                        print "Brokers: ", join( ", ", keys( %brokerObjs ), ),"\n";
+                        debugPrint "\nError: No such broker '$propertyVal'\n";
+                        debugPrint "Brokers: ", join( ", ", keys( %brokerObjs ), ),"\n";
                         next;
                     }
                 }
@@ -357,7 +350,7 @@ my %optHelp = (
                 #         }
                 #     },
                 elsif( $propertyName eq 'store'){
-                    print "\n=========================\nValidating store(s) ... ";
+                    debugPrint "\n=========================\nValidating store(s) ... ";
 
                     # PropertyVal is an ARRAYref, so dereference it and iterate over the array.
                     my @metricStores = @{ $propertyVal };
@@ -366,15 +359,15 @@ my %optHelp = (
                         # metricStore is a HASHRef... => { "file/db" : "fileId/dbId" }
                         foreach my $storeType ( keys( %{ $metricStore } ) ){
                             my $storeId = $metricStore->{ $storeType };
-                            print "StoreType: $storeType, storeId: $storeId\n";
+                            debugPrint "StoreType: $storeType, storeId: $storeId\n";
 
                             if( $storeType eq 'file' ){
                                 my $fileId = $metricStore->{ $storeType };
                                 if( $verbose ){
-                                    print "store.file: $fileId ";
+                                    debugPrint "store.file: $fileId ";
                                 }
                                 if( exists( $fileObjs{ $fileId } ) ){
-                                    print " checks out\n";
+                                    debugPrint " checks out\n";
                                     $metricObjs{ $metricId }->store( 'file', $fileId );
                                 }
                                 else{
@@ -385,10 +378,10 @@ my %optHelp = (
                             elsif( $storeType eq 'db' ){
                                 my $dbId = $metricStore->{ $storeType };
                                 if( $verbose ){
-                                    print "store.db: $dbId ";
+                                    debugPrint "store.db: $dbId ";
                                 }
                                 if( exists( $dbObjs{ $dbId } ) ){
-                                    print " checks out\n";
+                                    debugPrint " checks out\n";
                                     $metricObjs{ $metricId }->store( 'db', $dbId );
                                 }
                                 else{
@@ -402,27 +395,46 @@ my %optHelp = (
                             }
                         }
                     }
-                    print "\n==================< end store validation >===========\n";
+                    debugPrint "\n==================< end store validation >===========\n";
                 }
 
                 if( $verbose ){
-                    print "metricId: $metricId, ";
+                    debugPrint "metricId: $metricId, ";
                     if( ref( $propertyVal ) ){
-                        print "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                        debugPrint "Property '$propertyName' not a SCALAR: $propertyVal\n";
                     }
                     else{ 
-                        print "Property Name: $propertyName, Val: $propertyVal\n";
+                        debugPrint "Property Name: $propertyName, Val: $propertyVal\n";
                     }
-#                     print "\n";
                 }
                 $metricObjs{ $metricId }->property( $propertyName => $propertyVal );
             }
-            print "\n";
+            debugPrint "\n";
         }
     }
+
+    if( $metrics && $verbose ){
+        debugPrint "Successfully parsed JSON input and ready to launch MQTT client listener(s)\n";
+    }
     
+    #
+    #   Iteratively launch all specified MQTT Client subscriptions, and start up
+    #   handlers for incoming data.
+    #
+
+    foreach my $metricId ( keys( %metricObjs ) ){
+        my $metricObj = $metricObjs{ $metricId };
+        debugPrint $metricObj->property( 'name' ), "\n";
+    }
+
+
 exit( 0 );
     
+sub debugPrint(){
+    if( $verbose ){
+        print @_;
+    }
+}
 
 sub usage($$){
 

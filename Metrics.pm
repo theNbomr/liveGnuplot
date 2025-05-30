@@ -1,3 +1,12 @@
+#
+#   This is the Perl Class for the 'Metrics' objects. 
+#   Each Metrics instance defines how a measured paramter is acquired,
+#   and logged. The metadata that makes up a Metric instance allow code
+#   to establish a connection to a defined data source (MQTT in the 
+#   first release), and acquire the data on an ongoing basis. 
+#   The acquired data are stored/logged in the specified store(s).
+#
+
 package Metrics;
 
 sub new {
@@ -12,7 +21,9 @@ my $self = {};
     foreach my $key ( keys %params ){
         my $value = $params{ $key };
         $self->{ $key } = $value;
-        print "Key: $key, Value: $value\n";
+        if($verbose ){
+            print "Key: $key, Value: $value\n";
+        }
     }
     $self->{ stores } = [];
 
@@ -77,7 +88,7 @@ my $storeId = shift;
 #
 sub mqttClientInit {
 my $self = shift;
-my $callback = shift;
+# my $callback = shift;
 
     #
     #   Connect to the specified broker.
@@ -91,7 +102,9 @@ my $callback = shift;
     #
     my $ip    = $self->{ mqttIp };
     my $topic = $self->{ topic };
-    print "Subscribing to $topic on broker '$ip'\n";
+    if( $verbose ){
+        print "Subscribing to $topic on broker '$ip'\n";
+    }
     $mqttClient->subscribe( $topic, $self->{ CALLBACK } );
     return( $mqttClient );
 }
@@ -111,14 +124,8 @@ my $callback = shift;
 #
 sub handler($$$){
 my $self = shift;
-
-# ----------------------------------------------------
-#   These are undefined when this sub is called 
-#   as a callback for an MQTT subscriber.
-# ----------------------------------------------------
 my $topic = shift;
 my $message = shift;
-# my ($topic, $message) = @_;
 
     my $filespec = $self->{ 'logfile' };
     print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $filespec\n";

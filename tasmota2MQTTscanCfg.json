@@ -1,5 +1,5 @@
 {
-    # This is a comment line (non-standard JSON format)
+    # This is a comment line (non-standard in JSON formatted data)
     # Comment lines ( '#' as first non-whitespace character on a line) are
     # removed by the application that uses this file data
     #
@@ -61,7 +61,11 @@
             "port" : "18883"
         },
         "orangepi3" : {
-            "ip":"192.68.1.100",
+            "ip" : "192.68.1.100",
+            "port" : "18883"
+        },
+        "opi3remote" : {
+            "ip" : "207.216.254.31",
             "port" : "18883"
         }
     },
