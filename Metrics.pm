@@ -14,7 +14,8 @@ my $self = {};
         $self->{ $key } = $value;
         print "Key: $key, Value: $value\n";
     }
-    
+    $self->{ stores } = [];
+
     # Create a curried version of the object method 
     # to use as a callback by non-object code
     # RN does not really understand HOW this works,
@@ -51,6 +52,22 @@ my $property = shift;
             return undef;
         }
     }
+}
+
+sub store {
+my $self = shift;
+my $storeId = shift;
+
+    if( @_ ){
+        # Create a new storage property composed of the type (file, db) and Id.
+        if( 2 == scalar( @_ ) ){
+            my( $storeType, $storeId ) = @_;
+            my @stores = $self->{ stores };
+            push @stores, ( $storeType, $storeId );
+            return( $self->s)
+        }
+    }
+    return( \$self->{ stores } );
 }
 
 

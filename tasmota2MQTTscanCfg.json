@@ -1,8 +1,13 @@
 {
+    # This is a comment line (non-standard JSON format)
+    # Comment lines ( '#' as first non-whitespace character on a line) are
+    # removed by the application that uses this file data
+    #
     "configuration_name" : "rn_test1_cfg",
     "comment_list" : {
         "comment_1" : "configuration file in JSON notation for the MQTT Scraper application",
-        "comment_2" : "2025-May-20 RN thenbomr@gmail.com"
+        "comment_2" : "2025-May-20 RN thenbomr@gmail.com",
+        "comment_3" : "2025-May-28 RN Work in progress <git@github.com:theNbomr/liveGnuplot.git>"
     },
     
     "metrics" : { 
@@ -11,11 +16,11 @@
             "topic"  : "tele/tasmota_F74C1D/SENSOR",
             "ydata"  : "$.DS18B20.Temperature",
             "yformat" : "number",
-            "xdata"  : "$.Time",
+            "xdata"   : "$.Time",
             "xformat" : "timedate",
             "store" : [
-                    { "file" : "111_esp01_temperature" },
-                    { "db"   : "esp01_temperature" }
+                { "file" : "111_esp01_temperature" },
+                { "db"   : "esp01_temperature" }
             ]
         },
         
@@ -24,12 +29,11 @@
             "topic"  : "tele/tasmota_F74C1D/STATE",
             "ydata"  : "$.Wifi.Signal",
             "yformat" : "number",
-            "xdata"  : "$.Time",
+            "xdata"   : "$.Time",
             "xformat" : "timedate",
             "store" : [
                 { "file" : "111_esp01_signal" }
             ]
-
         },
         
         "111_esp32_signal" : {
@@ -37,11 +41,12 @@
             "topic"  : "tele/tasmota_F74C1D/STATE",
             "ydata"  : "$.Wifi.Signal",
             "yformat" : "number",
-            "xdata"  : "$.Time",
+            "xdata"   : "$.Time",
             "xformat" : "timedate",
             "store" : [
-                { "file" : "111_esp32_signal" },
-                { "db"   : "esp32_signal" }
+                { "file" : "111_esp32_signal" }
+                ,{ "db"  : "esp32_signal" }
+#                ,{ "db" : "esp32_signalxxxx" }
             ]
         }
     },

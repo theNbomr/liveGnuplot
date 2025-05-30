@@ -147,6 +147,20 @@ my %optHelp = (
     # print "ARGV[0] = $ARGV[0]\n";
     open( JSON_CFG, $ARGV[0] ) || die "Cannot read $ARGV[0] : $!\n";
     my @jsonText = <JSON_CFG>;
+    my $jsonLines = scalar @jsonText;
+
+    for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
+        if( $jsonText[ $i ] =~ m/^\s*#/ ){
+            if( $verbose ){
+                print "Removing line " ,$i+$j, " :$jsonText[$i]";
+            }
+            splice( @jsonText, $i, 1 );
+            $jsonLines--;
+            $i--;
+            $j++;
+        }
+    }
+
     close( JSON_CFG );
 
     # Convert the array data to a string 
@@ -172,10 +186,10 @@ my %optHelp = (
 
     # Populate these hashes to allow us to find named objects after
     # the JSON data has been fully parsed.
-    my %metrics;
-    my %brokers;
-    my %files;
-    my %dbs;
+    my %metricObjs;
+    my %brokerObjs;
+    my %fileObjs;
+    my %dbObjs;
     
          
     #   
@@ -193,12 +207,12 @@ my %optHelp = (
 
         foreach my $brokerId ( keys( %{ $brokers } ) ){
             my $broker = $brokers->{ $brokerId };
-            $brokers{ $brokerId } = Brokers->new( 'name' => $brokerId );
+            $brokerObjs{ $brokerId } = Brokers->new( 'name' => $brokerId );
 
             if( $verbose ){
                 print "Broker ID: $brokerId\n";
-                print "Broker Obj: ", $brokers{ $brokerId },"\n";
-                print "Lookup: ", $brokers{ $brokerId }->property( 'name' ),"\n";
+                print "Broker Obj: ", $brokerObjs{ $brokerId },"\n";
+                print "Lookup: ", $brokerObjs{ $brokerId }->property( 'name' ),"\n";
             }
 
             foreach my $propertyName ( keys %{ $broker } ){
@@ -223,8 +237,6 @@ my %optHelp = (
     #   Iterate over each JSON  Object, creating Perl db Objects.
     #
     if( defined( $dbs ) ){
-        
-        my %dbs = %{ $dbs };  # Dereference the HASHref
 
         if( $verbose ){
             my @dbIds =   keys( %{ $dbs } );
@@ -233,10 +245,10 @@ my %optHelp = (
             print "\t", join( ", ", @dbIds ), "\n\n";
         }
 
-        foreach my $dbId ( keys( %{ $dbs } ) ){
+        foreach my $dbId ( keys( %{ $dbs } ) ){    # Iterate on DB Ids
             my $db = $dbs->{ $dbId };
 
-            $dbs{ $dbId } = Dbs->new( 'name' => $dbId );
+            $dbObjs{ $dbId } = Dbs->new( 'name' => $dbId );
 
             foreach my $propertyName ( keys %{ $db } ){
                 my $propertyVal = $db->{ $propertyName };
@@ -260,8 +272,6 @@ my %optHelp = (
     #   Iterate over each JSON  Object, creating Perl File Objects.
     #
     if( defined( $files ) ){
-        
-        my %files = %{ $files };  # Dereference the HASHref
 
         if( $verbose ){
             my @fileIds =   keys( %{ $files } );
@@ -273,7 +283,7 @@ my %optHelp = (
         foreach my $fileId ( keys( %{ $files } ) ){
             my $file = $files->{ $fileId };
 
-            $files{ $fileId } = Files->new( 'name' => $fileId );
+            $fileObjs{ $fileId } = Files->new( 'name' => $fileId );
 
             foreach my $propertyName ( keys %{ $file } ){
                 my $propertyVal = $file->{ $propertyName };
@@ -292,7 +302,6 @@ my %optHelp = (
         }
     }
 
-
     #   
     #   Find the JSON 'Metrics' Object list. 
     #   Iterate over each JSON Metric Object, creating Perl Metrics Objects.
@@ -303,72 +312,97 @@ my %optHelp = (
 
         if( $verbose ){
             my @metricIds =   keys( %{ $metrics } );
-            my @metrics     = values( %{ $metrics } );
+            my @metrics   = values( %{ $metrics } );
             print scalar @metricIds, " Named Metrics:\n";
             print "\t", join( ", ", @metricIds ), "\n\n";
         }
 
         foreach my $metricId ( keys( %{ $metrics } ) ){
             my $metric = $metrics->{ $metricId };
+            print "---------- $metricId ----------\n";
 
-            $metrics{ $metricId } = Metrics->new( 'name' => $metricId );
+            $metricObjs{ $metricId } = Metrics->new( 'name' => $metricId );
 
             foreach my $propertyName ( keys %{ $metric } ){
 
                 my $propertyVal = $metric->{ $propertyName };
+                # print "Metric Property name: $propertyName, val: $propertyVal\n";
+
                 if( $propertyName eq 'broker' ){
                     # 
                     # Lookup/validate specified broker
                     #
                     print "Validating broker '$propertyVal ... ";
-                    if( exists( $brokers{ $propertyVal } ) ){
-                        print " +++ \n";
+                    if( exists( $brokerObjs{ $propertyVal } ) ){
+                        print " checks out\n";
                     }
                     else{
                         print "\nError: No such broker '$propertyVal'\n";
-                        print "Brokers: ", join( ", ", keys( %brokers ), ),"\n";
+                        print "Brokers: ", join( ", ", keys( %brokerObjs ), ),"\n";
                         next;
                     }
                 }
+
+                # "metrics" : { 
+                #     "111_esp01_temperature" : {
+                #         "broker" : "orangepi3",
+                #         "topic"  : "tele/tasmota_F74C1D/SENSOR",
+                #         "ydata"  : "$.DS18B20.Temperature",
+                #         "yformat" : "number",
+                #         "xdata"   : "$.Time",
+                #         "xformat" : "timedate",
+                #         "store" : { 
+                #             "file" : "111_esp01_temperature",
+                #             "db"   : "esp01_temperature" 
+                #         }
+                #     },
                 elsif( $propertyName eq 'store'){
+                    print "\n=========================\nValidating store(s) ... ";
+
+                    # PropertyVal is an ARRAYref, so dereference it and iterate over the array.
                     my @metricStores = @{ $propertyVal };
                     foreach my $metricStore ( @metricStores ){
-                        my %storeProperties = %{ $metricStore };
-                        print "Metric Store: ", join( ", ", keys %{ $metricStore } ),"\n";
 
-                        if( exists( $storeProperties{ 'file' } ) ){
+                        # metricStore is a HASHRef... => { "file/db" : "fileId/dbId" }
+                        foreach my $storeType ( keys( %{ $metricStore } ) ){
+                            my $storeId = $metricStore->{ $storeType };
+                            print "StoreType: $storeType, storeId: $storeId\n";
 
-                            if( exists( $files{ $storeProperties{ 'file' } } ) ){
-                                print " +++ \n";
-                                last;
+                            if( $storeType eq 'file' ){
+                                my $fileId = $metricStore->{ $storeType };
+                                if( $verbose ){
+                                    print "store.file: $fileId ";
+                                }
+                                if( exists( $fileObjs{ $fileId } ) ){
+                                    print " checks out\n";
+                                    $metricObjs{ $metricId }->store( 'file', $fileId );
+                                }
+                                else{
+                                    print STDERR "\nNo such File Id: '$fileId'\n";
+                                    exit( 1 );
+                                }
                             }
-                            else{
-                                print "\nError: No such file '$storeProperties{ 'file' }'\n";
-                                next;
+                            elsif( $storeType eq 'db' ){
+                                my $dbId = $metricStore->{ $storeType };
+                                if( $verbose ){
+                                    print "store.db: $dbId ";
+                                }
+                                if( exists( $dbObjs{ $dbId } ) ){
+                                    print " checks out\n";
+                                    $metricObjs{ $metricId }->store( 'db', $dbId );
+                                }
+                                else{
+                                    print STDERR "\nNo such DB Id: '$dbId'\n";
+                                    exit( 1 );
+                                }
                             }
-                        }
-                        elsif( exists( $storeProperties{ 'db' } ) ){
-
-                            if( exists( $files{ $storeProperties{ 'db' } } ) ){
-                                print " +++ \n";
-                                last;
+                            else {
+                                print STDERR "Invalid store Type: '$storeType'\n";
+                                exit( 1 );
                             }
-                            else{
-                                print "\nError: No such file '$storeProperties{ 'db' }'\n";
-                                next;
-                            }
-                        }
-
-                        print "Validating store '$propertyVal ... ";
-                        if( exists( $files{ $propertyVal } ) || 
-                            exists(   $dbs{ $propertyVal } )   ){
-                        }
-                        else{
-                            print "\nError: No such store '$propertyVal'\n";
-                            print "Brokers: ", join( ", ", keys( %files ) ), ", ", join( ", ", keys( %dbs ) ),"\n";
-                            next;
                         }
                     }
+                    print "\n==================< end store validation >===========\n";
                 }
 
                 if( $verbose ){
@@ -379,8 +413,9 @@ my %optHelp = (
                     else{ 
                         print "Property Name: $propertyName, Val: $propertyVal\n";
                     }
+#                     print "\n";
                 }
-                $metrics{ $metricId }->property( $propertyName => $propertyVal );
+                $metricObjs{ $metricId }->property( $propertyName => $propertyVal );
             }
             print "\n";
         }
