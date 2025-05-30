@@ -73,9 +73,10 @@ my %optHelp = (
     #
     #   How to use non-standard IP Port numbers...?
     #
-    my %sockOptions = ( 'port' => $mqttBrokerPort );
+    # my %sockOptions = ( 'port' => 1883 );  # Nope...  
+    my %sockOptions = ( SO_REUSEADDR => 1 );
     my $mqttClient = Net::MQTT::Simple->new( $mqttBrokerIp.":$mqttBrokerPort"
-                                        #    , \%sockOptions 
+                                             , \%sockOptions 
                                             );
                                         
     $mqttClient->subscribe( $mqttTopic, \&subscriptionHandler );
