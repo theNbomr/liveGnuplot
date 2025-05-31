@@ -319,7 +319,7 @@ my %optHelp = (
             my $metric = $metrics->{ $metricId };
             debugPrint "---------- $metricId ----------\n";
 
-            my $thisMetricObj = Metrics->new( 'name' => $metricId );
+            my $thisMetricObj = Metrics->new( 'name' => $metricId, 'logfile' => '/home/bomr/tmp/rnJunk.log' );
             $metricObjs{ $metricId } = $thisMetricObj;
 
             foreach my $propertyName ( keys %{ $metric } ){

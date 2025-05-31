@@ -27,7 +27,8 @@
         #   A metric specifying a non-existant IP:Port, for testing
         #
         "111_esp01_signal" : {
-            "broker" : "fakebroker",
+#             "broker" : "fakebroker",
+            "broker" : "orangepi3",
             "topic"  : "tele/tasmota_F74C1D/STATE",
             "ydata"  : "$.Wifi.Signal",
             "yformat" : "number",
@@ -39,8 +40,8 @@
         },
         
         "111_esp32_signal" : {
-            "broker" : "opi3remote",
-            "topic"  : "tele/tasmota_F74C1D/SENSOR",
+            "broker" : "orangepi3",
+            "topic"  : "tele/tasmota_F74C1D/STATE",
             "ydata"  : "$.Wifi.Signal",
             "yformat" : "number",
             "xdata"   : "$.Time",
@@ -67,7 +68,7 @@
             "port" : "1883"
         },
         "orangepi3" : {
-            "ip" : "192.68.1.100",
+            "ip" : "192.168.1.100",
             "port" : "1883"
         },
         "opi3remote" : {

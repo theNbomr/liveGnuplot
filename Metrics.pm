@@ -101,18 +101,22 @@ sub mqttClientInit {
 my $self = shift;
 my $broker = shift;
     my  %thisBroker = %{ $broker };
-
-    # print "Launch MQTT Broker: name:", $broker->property( 'name' );
-    # print ", ip: ",   $broker->property( 'ip' );
-    # print ", port: ", $broker->property( 'port' ),"\n";
-    # print "All broker properties: ", join( ", ", $broker->properties() ),"\n";
+    #if( $main::verbose ){
+        print "Launch MQTT Broker: name:", $broker->property( 'name' );
+        print ", ip: ",   $broker->property( 'ip' );
+        print ", port: ", $broker->property( 'port' ),"\n";
+        print "All broker properties: ", join( ", ", $broker->properties() ),"\n";
+    #}
 
     my $brokerIp = $broker->property( 'ip' ).":";
     $brokerIp   .= $broker->property( 'port' );
     #
     #   Connect to the specified broker.
     #
-    print "Broker IP:port (Metrics) ", $brokerIp,"\n";
+    # if( $main::verbose ){
+        print "Broker IP:port (Metrics) ", $brokerIp,"\n";
+    # }
+
     my $mqttClient = Net::MQTT::Simple->new( $brokerIp );
     if( $mqttClient ){
         print "MQTT Broker $brokerIp connection Okay\n"
@@ -125,10 +129,18 @@ my $broker = shift;
     #   to the specified topic. The callback will be invoked
     #   on each new data event.
     #
-    if( $verbose ){
+    # if( $Main::verbose ){
         print "Subscribing to ", $self->{ 'topic' }, " on broker '$brokerIp'\n";
-    }
+    # }
+
     $mqttClient->subscribe( $self->{ 'topic' }, $self->{ 'CALLBACK' } );
+    print "Subscription registered\n";
+    my $testTopic = "$0/$$"; 
+    $testTopic =~ s/^[.\/]*//;
+    $testTopic =~ s/\./_/g;
+    my $testMessage = '{"timedate":"'.scalar localtime( time ).'"}';
+    print "Publish 'Alive' message: Topic: $testTopic, Message: $testMessage\n";
+    $mqttClient->publish( $testTopic => $testMessage );
     return( $mqttClient );
 }
 
@@ -150,12 +162,12 @@ my $self = shift;
 my $topic = shift;
 my $message = shift;
 
-    # my $filespec = $self->{ 'logfile' };
+    my $filespec = $self->{ 'logfile' };
     print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $filespec\n";
     
-    # open( LOG, ">>$filespec" ) || die "Cannot open $filespec for writing: $!\n";
-    # print( LOG "'$topic' : $message\n" );
-    # close( LOG );
+    open( LOG, ">>$filespec" ) || die "Cannot open $filespec for writing: $!\n";
+    print( LOG "'$topic' : $message\n" );
+    close( LOG );
     return 2;
 }
 1;
