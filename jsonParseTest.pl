@@ -209,3 +209,27 @@ else{
     # foreach my $subscription( $jsonData->{ Subscriptions } ){
     #     print Dumper( $subscription );
     # }
+
+    
+    
+1;
+
+package metric;
+
+sub new {
+my $proto = shift;
+my $class = ref( $proto ) || $proto;
+my $self = {};
+
+    bless $self, $class;
+
+    my %params = @_;
+    foreach my $key ( keys %params ){
+        my $value = $params{ $key };
+        $self->{ $key } = $value;
+#         print "Key: $key, Value: $value\n";
+#         exit;
+    }
+    return $self;
+    
+}

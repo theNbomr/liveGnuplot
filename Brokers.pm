@@ -20,12 +20,17 @@ my $self = {};
 }
 
 
-sub property($$){
+sub property {
 my $self = shift;
 my $property = shift;
 
+    # print "** Brokers property setter/getter ($property) **\n";
     if( @_ ){
-        $self->{$property} = @_;
+        my $value = shift;
+        if( $verbose ){
+            print "\tSetting Broker Property: $property, => Value: $value\n";
+        }
+        $self->{$property} = $value;
         return $self->{$property};
     }
     else{
@@ -38,6 +43,12 @@ my $property = shift;
     }
 }
 
+
+sub properties {
+my $self = shift;
+    my @properties = keys( %{$self} );
+    return @properties;
+}
 
 1;
 

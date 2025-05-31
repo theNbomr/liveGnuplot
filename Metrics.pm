@@ -47,12 +47,17 @@ sub curry {
     return sub { $self->$method( @args, @_ ) };
 }
 
-sub property($$){
+sub property {
 my $self = shift;
 my $property = shift;
 
+    # print "** Metrics property setter/getter ($property) **\n";
     if( @_ ){
-        $self->{$property} = @_;
+        my $value = shift;
+        if( $verbose ){
+            print "\tSetting Property: $property, Value: $value\n";
+        }
+        $self->{$property} = $value;
         return $self->{$property};
     }
     else{
@@ -64,6 +69,13 @@ my $property = shift;
         }
     }
 }
+
+sub properties {
+my $self = shift;
+    my @properties = keys( %{$self} );
+    return @properties;
+}
+
 
 sub store {
 my $self = shift;
@@ -78,9 +90,8 @@ my $storeId = shift;
             return( $self->s)
         }
     }
-    return( \$self->{ stores } );
+    return( $self->{ stores } );
 }
-
 
 #
 #   Establish a connection to the specified MQTT Broker, and then
@@ -88,24 +99,36 @@ my $storeId = shift;
 #
 sub mqttClientInit {
 my $self = shift;
-# my $callback = shift;
+my $broker = shift;
+    my  %thisBroker = %{ $broker };
 
+    # print "Launch MQTT Broker: name:", $broker->property( 'name' );
+    # print ", ip: ",   $broker->property( 'ip' );
+    # print ", port: ", $broker->property( 'port' ),"\n";
+    # print "All broker properties: ", join( ", ", $broker->properties() ),"\n";
+
+    my $brokerIp = $broker->property( 'ip' ).":";
+    $brokerIp   .= $broker->property( 'port' );
     #
     #   Connect to the specified broker.
     #
-    my $mqttClient = Net::MQTT::Simple->new( $self->{ mqttIp } );
-    
+    print "Broker IP:port (Metrics) ", $brokerIp,"\n";
+    my $mqttClient = Net::MQTT::Simple->new( $brokerIp );
+    if( $mqttClient ){
+        print "MQTT Broker $brokerIp connection Okay\n"
+    }
+    else{ 
+        die "Could not open MQTT Connection\n";
+    }
     #
     #   Create a subscription on the already connected broker,
     #   to the specified topic. The callback will be invoked
     #   on each new data event.
     #
-    my $ip    = $self->{ mqttIp };
-    my $topic = $self->{ topic };
     if( $verbose ){
-        print "Subscribing to $topic on broker '$ip'\n";
+        print "Subscribing to ", $self->{ 'topic' }, " on broker '$brokerIp'\n";
     }
-    $mqttClient->subscribe( $topic, $self->{ CALLBACK } );
+    $mqttClient->subscribe( $self->{ 'topic' }, $self->{ 'CALLBACK' } );
     return( $mqttClient );
 }
 
@@ -127,12 +150,12 @@ my $self = shift;
 my $topic = shift;
 my $message = shift;
 
-    my $filespec = $self->{ 'logfile' };
+    # my $filespec = $self->{ 'logfile' };
     print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $filespec\n";
     
-    open( LOG, ">>$filespec" ) || die "Cannot open $filespec for writing: $!\n";
-    print( LOG "'$topic' : $message\n" );
-    close( LOG );
+    # open( LOG, ">>$filespec" ) || die "Cannot open $filespec for writing: $!\n";
+    # print( LOG "'$topic' : $message\n" );
+    # close( LOG );
     return 2;
 }
 1;

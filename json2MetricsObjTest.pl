@@ -4,6 +4,7 @@ use strict;
 use JSON::Path;
 use Data::Dumper;
 use Getopt::Long;
+use Net::MQTT::Simple;
 
 use lib ".";
 use Metrics;
@@ -147,7 +148,13 @@ my %optHelp = (
     open( JSON_CFG, $ARGV[0] ) || die "Cannot read $ARGV[0] : $!\n";
     my @jsonText = <JSON_CFG>;
     my $jsonLines = scalar @jsonText;
+    close( JSON_CFG );
 
+    #
+    #   the JSON standard doens't provide for comments, so we 
+    #   delete any embedded comment lines before feeding it to 
+    #   Perl packages that read JSON data.
+    #
     for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
         if( $jsonText[ $i ] =~ m/^\s*#/ ){
             debugPrint( "Removing line " ,$i+$j, " :$jsonText[$i]" );
@@ -157,8 +164,6 @@ my %optHelp = (
             $j++;
         }
     }
-
-    close( JSON_CFG );
 
     # Convert the array data to a string 
     my $jsonText = join( "", @jsonText );
@@ -173,7 +178,6 @@ my %optHelp = (
     my $filesPath   = JSON::Path->new( '$.files' );
     my $DBsPath     = JSON::Path->new( '$.dbs' );
 
-
     my $metrics = $metricsPath->value( $jsonText );
     my $brokers = $brokersPath->value( $jsonText );
     my $files   = $filesPath->value( $jsonText );
@@ -185,8 +189,8 @@ my %optHelp = (
     my %brokerObjs;
     my %fileObjs;
     my %dbObjs;
-    
-         
+    my @mqttClients;
+
     #   
     #   Find the JSON 'Metrics' Object list. 
     #   Iterate over each JSON Metric Object, creating Perl Metrics Objects.
@@ -214,12 +218,13 @@ my %optHelp = (
                 if( $verbose ){
                     debugPrint "brokerId: $brokerId, ";
                     if( ref( $propertyVal ) ){
-                        debugPrint "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                        debugPrint "Property '$propertyName' not a SCALAR: '$propertyVal'\n";
                     }
                     else{ 
-                        debugPrint "Property Name: $propertyName, Val: $propertyVal\n";
+                        debugPrint "Property Name: '$propertyName', Val: '$propertyVal'\n";
                     }
                 }
+                $brokerObjs{ $brokerId }->property( $propertyName=>$propertyVal );
             }
             debugPrint "\n";
         }
@@ -314,12 +319,13 @@ my %optHelp = (
             my $metric = $metrics->{ $metricId };
             debugPrint "---------- $metricId ----------\n";
 
-            $metricObjs{ $metricId } = Metrics->new( 'name' => $metricId );
+            my $thisMetricObj = Metrics->new( 'name' => $metricId );
+            $metricObjs{ $metricId } = $thisMetricObj;
 
             foreach my $propertyName ( keys %{ $metric } ){
 
                 my $propertyVal = $metric->{ $propertyName };
-                # debugPrint "Metric Property name: $propertyName, val: $propertyVal\n";
+                debugPrint "Metric Property name: $propertyName, val: $propertyVal\n";
 
                 if( $propertyName eq 'broker' ){
                     # 
@@ -328,10 +334,11 @@ my %optHelp = (
                     debugPrint "Validating broker '$propertyVal ... ";
                     if( exists( $brokerObjs{ $propertyVal } ) ){
                         debugPrint " checks out\n";
+                        $thisMetricObj->property( 'broker' => $propertyVal );
                     }
                     else{
-                        debugPrint "\nError: No such broker '$propertyVal'\n";
-                        debugPrint "Brokers: ", join( ", ", keys( %brokerObjs ), ),"\n";
+                        print STDERR "\nError: No such broker '$propertyVal'\n";
+                        print STDERR "Brokers: ", join( ", ", keys( %brokerObjs ), ),"\n";
                         next;
                     }
                 }
@@ -397,24 +404,28 @@ my %optHelp = (
                     }
                     debugPrint "\n==================< end store validation >===========\n";
                 }
-
-                if( $verbose ){
-                    debugPrint "metricId: $metricId, ";
-                    if( ref( $propertyVal ) ){
-                        debugPrint "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                else{
+                    if( $verbose ){
+                        debugPrint "metricId: $metricId, ";
+                        if( ref( $propertyVal ) ){
+                            debugPrint "Property '$propertyName' not a SCALAR: $propertyVal\n";
+                        }
+                        else{ 
+                            debugPrint "Property Name: $propertyName, Val: $propertyVal\n";
+                        }
                     }
-                    else{ 
-                        debugPrint "Property Name: $propertyName, Val: $propertyVal\n";
-                    }
+                    
+                    $thisMetricObj->property( $propertyName => $propertyVal );
                 }
-                $metricObjs{ $metricId }->property( $propertyName => $propertyVal );
             }
             debugPrint "\n";
         }
     }
 
     if( $metrics && $verbose ){
-        debugPrint "Successfully parsed JSON input and ready to launch MQTT client listener(s)\n";
+        debugPrint "===========================================================\n",
+                   "Successfully parsed JSON input and ready to launch MQTT client listener(s)\n",
+                   "===========================================================\n\n";
     }
     
     #
@@ -424,9 +435,33 @@ my %optHelp = (
 
     foreach my $metricId ( keys( %metricObjs ) ){
         my $metricObj = $metricObjs{ $metricId };
-        debugPrint $metricObj->property( 'name' ), "\n";
+        debugPrint "\n", $metricObj->property( 'name' ), ":\n";
+        debugPrint "\t", join( ", ", "$metricId: ", $metricObj->properties ), "\n";
+
+        foreach my $metricProperty ( $metricObj->properties() ){
+            debugPrint "Property: ", $metricProperty, ", Value: ", $metricObj->property( $metricProperty ), "\n";
+        }
+
+        debugPrint( "\n" );
+
+        my $metricBrokerId = $metricObj->property( 'broker' );
+        # debugPrint "MQTT Broker ID $metricBrokerId\n";
+        my $metricBroker = $brokerObjs{ $metricBrokerId };
+        debugPrint "Broker Properties (main): ", 
+                $metricBroker->property( 'ip' ), ", ", 
+                $metricBroker->property( 'port' ),"\n";
+        my $mqttClient = $metricObj->mqttClientInit( $metricBroker );
+        push( @mqttClients, $mqttClient );
     }
 
+    #
+    #   Spin around, waiting for callbacks to happen
+    #
+    while( 1 ){
+        foreach my $mqttClient ( @mqttClients ){
+            $mqttClient->tick();
+        }
+    }
 
 exit( 0 );
     

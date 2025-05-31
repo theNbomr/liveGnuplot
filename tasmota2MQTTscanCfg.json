@@ -23,9 +23,11 @@
                 { "db"   : "esp01_temperature" }
             ]
         },
-        
+        #
+        #   A metric specifying a non-existant IP:Port, for testing
+        #
         "111_esp01_signal" : {
-            "broker" : "orangepi3",
+            "broker" : "fakebroker",
             "topic"  : "tele/tasmota_F74C1D/STATE",
             "ydata"  : "$.Wifi.Signal",
             "yformat" : "number",
@@ -37,8 +39,8 @@
         },
         
         "111_esp32_signal" : {
-            "broker" : "orangepi3xxx",
-            "topic"  : "tele/tasmota_F74C1D/STATE",
+            "broker" : "opi3remote",
+            "topic"  : "tele/tasmota_F74C1D/SENSOR",
             "ydata"  : "$.Wifi.Signal",
             "yformat" : "number",
             "xdata"   : "$.Time",
@@ -46,7 +48,7 @@
             "store" : [
                 { "file" : "111_esp32_signal" }
                 ,{ "db"  : "esp32_signal" }
-#                ,{ "db" : "esp32_signalxxxx" }
+#                 ,{ "db" : "esp32_signalxxxx" }
             ]
         }
     },
@@ -56,17 +58,25 @@
             "ip": "192.168.0.19",
             "port" : "1883"
         },
+        "delldeb8remote" : {
+            "ip": "s01060040f484018a.vf.shawcable.net",
+            "port" : "19883"
+        },
         "delli3deb11" : { 
             "ip" : "192.168.1.101",
-            "port" : "18883"
+            "port" : "1883"
         },
         "orangepi3" : {
             "ip" : "192.68.1.100",
-            "port" : "18883"
+            "port" : "1883"
         },
         "opi3remote" : {
             "ip" : "207.216.254.31",
             "port" : "18883"
+        },
+        "fakebroker" : {
+            "ip" : "123.23.1.0",
+            "port" : "11883"
         }
     },
     
