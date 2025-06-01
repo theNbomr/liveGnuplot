@@ -375,7 +375,7 @@ my %optHelp = (
                                 }
                                 if( exists( $fileObjs{ $fileId } ) ){
                                     debugPrint " checks out\n";
-                                    $metricObjs{ $metricId }->store( 'file', $fileId );
+                                    $thisMetricObj->store( 'file' => $fileId );
                                 }
                                 else{
                                     print STDERR "\nNo such File Id: '$fileId'\n";
@@ -389,7 +389,7 @@ my %optHelp = (
                                 }
                                 if( exists( $dbObjs{ $dbId } ) ){
                                     debugPrint " checks out\n";
-                                    $metricObjs{ $metricId }->store( 'db', $dbId );
+                                    $thisMetricObj->store( 'db' => $dbId );
                                 }
                                 else{
                                     print STDERR "\nNo such DB Id: '$dbId'\n";
@@ -427,7 +427,7 @@ my %optHelp = (
                    "Successfully parsed JSON input and ready to launch MQTT client listener(s)\n",
                    "===========================================================\n\n";
     }
-    
+
     #
     #   Iteratively launch all specified MQTT Client subscriptions, and start up
     #   handlers for incoming data.
@@ -436,11 +436,20 @@ my %optHelp = (
     foreach my $metricId ( keys( %metricObjs ) ){
         my $metricObj = $metricObjs{ $metricId };
         debugPrint "\n", $metricObj->property( 'name' ), ":\n";
-        debugPrint "\t", join( ", ", "$metricId: ", $metricObj->properties ), "\n";
+        debugPrint "\t$metricId: ", join( ", ", $metricObj->properties ), "\n";
 
         foreach my $metricProperty ( $metricObj->properties() ){
-            debugPrint "Property: ", $metricProperty, ", Value: ", $metricObj->property( $metricProperty ), "\n";
+            if( $metricProperty ne 'stores' ){
+                debugPrint "Property: ", $metricProperty, 
+                            ", Value: ", $metricObj->property( $metricProperty ), "\n";
+            }
+            else{
+                debugPrint "Property (@): ", $metricProperty, 
+                            ", Value: ", join( " // ", $metricObj->store() ), "\n";
+            }
         }
+        my @metricStores = $metricObj->store( );
+        print "$metricId Stores: ", join( " : ", @metricStores ), "\n\n";
 
         debugPrint( "\n" );
 

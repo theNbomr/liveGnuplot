@@ -25,7 +25,7 @@ my $self = {};
             print "Key: $key, Value: $value\n";
         }
     }
-    $self->{ stores } = [];
+    $self->{ stores } = ();
 
     # Create a curried version of the object method 
     # to use as a callback by non-object code
@@ -79,15 +79,15 @@ my $self = shift;
 
 sub store {
 my $self = shift;
-my $storeId = shift;
 
+    # my @stores = $self->{ stores };
     if( @_ ){
         # Create a new storage property composed of the type (file, db) and Id.
         if( 2 == scalar( @_ ) ){
             my( $storeType, $storeId ) = @_;
-            my @stores = $self->{ stores };
-            push @stores, ( $storeType, $storeId );
-            return( $self->s)
+            print "Adding store: $storeType => $storeId \n";
+            my %store = ( $storeType => $storeId );
+            push @{ $self->{ stores } }, %store;
         }
     }
     return( $self->{ stores } );
@@ -162,12 +162,32 @@ my $self = shift;
 my $topic = shift;
 my $message = shift;
 
+    print "Begin MQTT Callback:\n";
+
     my $filespec = $self->{ 'logfile' };
     print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $filespec\n";
     
     open( LOG, ">>$filespec" ) || die "Cannot open $filespec for writing: $!\n";
     print( LOG "'$topic' : $message\n" );
+    print( LOG join( ", ", keys( %{$self},)), "\n" );
     close( LOG );
+ 
+    $self->handleStores();
+    print "END MQTT Callback\n";
     return 2;
 }
+
+sub handleStores(){
+my $self = shift;
+my @stores = @{ $self->{ stores }};  # Stores are treated as a special type of property of a metric
+
+    print "Begin Stores Handler\n";
+    print $self->{ name }, ", ", @stores, "\n";
+    print $self->{ name }, ", ", join( ", ", @stores), ", ", scalar @stores, "\n";
+    print $self->{ name }, ", ", $stores[ 0 ], "\n";
+    print "End Stores Handler\n";
+    return '';
+}
+
 1;
+

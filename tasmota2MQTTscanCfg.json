@@ -28,7 +28,7 @@
         #
         "111_esp01_signal" : {
 #             "broker" : "fakebroker",
-            "broker" : "orangepi3",
+            "broker" : "opi3remote",
             "topic"  : "tele/tasmota_F74C1D/STATE",
             "ydata"  : "$.Wifi.Signal",
             "yformat" : "number",
@@ -41,7 +41,7 @@
         
         "111_esp32_signal" : {
             "broker" : "orangepi3",
-            "topic"  : "tele/tasmota_F74C1D/STATE",
+            "topic"  : "tele/tasmota_FC72F4/STATE",
             "ydata"  : "$.Wifi.Signal",
             "yformat" : "number",
             "xdata"   : "$.Time",
