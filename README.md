@@ -21,3 +21,5 @@ This repository now contains code fragments that are working toward a generic MQ
  
 The latter is presently the most challenging, requiring to get an Object instance callback subroutine to be used in the callback from Net::MQTT::Simple. [SOLVED]
 
+See the Wiki for up-to-date and detailed information
+https://github.com/theNbomr/liveGnuplot/wiki#livegnuplot
