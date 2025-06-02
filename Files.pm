@@ -24,16 +24,15 @@ my $self = shift;
 my $property = shift;
 
     if( @_ ){
-        $self->{$property} = @_;
+        $self->{$property} = shift;
         return $self->{$property};
     }
+    elsif( exists( $self->{$property} ) ){
+        return( $self->{$property} );
+    }
     else{
-        if( exists( $self->{$property} ) ){
-            return( $self->{$property} );
-        }
-        else{
-            return undef;
-        }
+        print "No File Property '$property' found\n";
+        return undef;
     }
 }
 

@@ -90,7 +90,7 @@ my $self = shift;
             push @{ $self->{ stores } }, %store;
         }
     }
-    return( $self->{ stores } );
+    return( @{ $self->{ stores } } );
 }
 
 #
@@ -124,6 +124,54 @@ my $broker = shift;
     else{ 
         die "Could not open MQTT Connection\n";
     }
+
+    #
+    #   If there are any logfiles or db's to resolve for this metric,
+    #   do it here to reduce overhead in the callback..
+    #
+
+    # my $filespec = $self->{ 'logfile' };
+
+    my @stores = @{ $self->{ stores } };  # Stores are treated as a special type of property of a metric
+
+    print "\thandler: ", $self->{ name }, ", (", scalar @stores, ") ", join( ", ", @stores), ", ", "\n";
+    while( @stores ){
+        my ( $storeType, $storeId ) = @stores;
+        print "Store Type: $storeType, Store Name: $storeId\n";
+        shift @stores;
+        shift @stores;
+        if( $storeType eq 'file' ){
+
+            #
+            #   StoreId is not a filename; it's a reference to a 'file' top-level type.
+            #   We need to lookup the specified file Object. The lookup for that lives 
+            #   in the main:: namespace...
+            #
+            if( %main::fileObjs ){
+                print "Main File Lookup: ", join( ", ", sort keys( %main::fileObjs ) ),"\n";
+            }
+            else{
+                print "Cannot access Main File Lookup '\%main::fileObjs'\n";
+                die;
+            }
+
+            my $fileObj = $main::fileObjs{ $storeId };
+            if( !defined( $fileObj ) ){
+                die "Cannot lookup file ID $storeId: not defined \n";
+            }
+            else{
+                print "File Obj Metadata: ", join( ", ", sort keys %{ $fileObj } ), "\n";
+                my $timeDateStamp = scalar localtime( time );
+                $timeDateStamp =~ s/\s/_/g;
+                $fileSpec = $fileObj->property( 'directory') . "/" .
+                            $fileObj->property( 'basename' ) . "_" .
+                            $timeDateStamp . ".log";
+                print "Filespec: $fileSpec\n";
+                $self->{ 'logfile' } = $fileSpec;
+            }
+        }
+    }
+
     #
     #   Create a subscription on the already connected broker,
     #   to the specified topic. The callback will be invoked
@@ -157,37 +205,33 @@ my $broker = shift;
 #         "TempUnit":"C"
 #     }
 #
+
 sub handler($$$){
 my $self = shift;
 my $topic = shift;
 my $message = shift;
 
     print "Begin MQTT Callback:\n";
-
-    my $filespec = $self->{ 'logfile' };
-    print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $filespec\n";
     
-    open( LOG, ">>$filespec" ) || die "Cannot open $filespec for writing: $!\n";
-    print( LOG "'$topic' : $message\n" );
-    print( LOG join( ", ", keys( %{$self},)), "\n" );
-    close( LOG );
+    my $storeType = 'file';
+
+    if( $storeType eq 'file' ){
+        my $fileSpec = $self->{ logfile };
+        print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $filespec\n";
+        print "Updating log file '$fileSpec'\n";
+        open( LOG, ">>$fileSpec" ) || die "Cannot open $fileSpec for writing: $!\n";
+        print( LOG "'$topic' : $message\n" );
+        close( LOG );
+    }
+    elsif( $storeType eq 'db' ){
+        print "Store type 'DB' (not implemented)\n";
+    }
  
-    $self->handleStores();
+    # $self->handleStores($topic, $message);
     print "END MQTT Callback\n";
-    return 2;
-}
-
-sub handleStores(){
-my $self = shift;
-my @stores = @{ $self->{ stores }};  # Stores are treated as a special type of property of a metric
-
-    print "Begin Stores Handler\n";
-    print $self->{ name }, ", ", @stores, "\n";
-    print $self->{ name }, ", ", join( ", ", @stores), ", ", scalar @stores, "\n";
-    print $self->{ name }, ", ", $stores[ 0 ], "\n";
-    print "End Stores Handler\n";
     return '';
 }
 
 1;
+
 

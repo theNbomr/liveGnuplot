@@ -187,7 +187,7 @@ my %optHelp = (
     # the JSON data has been fully parsed.
     my %metricObjs;
     my %brokerObjs;
-    my %fileObjs;
+    our  %fileObjs;
     my %dbObjs;
     my @mqttClients;
 
@@ -287,7 +287,7 @@ my %optHelp = (
                 my $propertyVal = $file->{ $propertyName };
 
                 if( $verbose ){
-                    debugPrint "dbId: $fileId, ";
+                    debugPrint "fileId: $fileId, ";
                     if( ref( $propertyVal ) ){
                         debugPrint "Property '$propertyName' not a SCALAR: $propertyVal\n";
                     }
@@ -295,6 +295,7 @@ my %optHelp = (
                         debugPrint "Property Name: $propertyName, Val: $propertyVal\n";
                     }
                 }
+                $fileObjs{ $fileId }->property( $propertyName => $propertyVal );
             }
             debugPrint "\n";
         }
