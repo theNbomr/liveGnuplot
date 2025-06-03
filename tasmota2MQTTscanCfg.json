@@ -49,7 +49,20 @@
             "store" : [
                 { "file" : "111_esp32_signal" }
                 ,{ "db"  : "esp32_signal" }
-#                 ,{ "db" : "esp32_signalxxxx" }
+            ]
+        },
+
+        "116_lr_temp" : {
+            "broker" : "delldeb8remote",
+            "topic"  : "RN_IOT_DAQ/00:00:00:5f:66:29",
+            "xdata"   : "$.TIME",
+            "ydata"   : "$.TEMPERATURE",
+            "xformat" : "timedate",
+            "yformat" : "number",
+            "store" : [
+                { "file" : "116_lr_temperature" },
+                { "file" : "rnIoT_esp01_temp" }
+#                 { "db" : "esp32_signal" }
             ]
         }
     },
@@ -95,6 +108,16 @@
         "111_esp01_temperature" : {
             "directory" : "/home/bomr/data/esp01_temperature",
             "basename"  : "111_esp01_temperature"
+        },
+
+        "116_lr_temperature" : {
+            "directory" : "/home/bomr/data/116",
+            "basename"  : "lr_temperature"
+        },
+        
+        "rnIoT_esp01_temp" : {
+            "directory" : "/home/bomr/data/116",
+            "basename"  : "rn_IoT_eps01_temp"
         }
     },
     

@@ -25,7 +25,10 @@ my $self = {};
             print "Key: $key, Value: $value\n";
         }
     }
+
     $self->{ stores } = ();
+    $slef->{ logfiles } = ();
+    $self->{ dbs } = ();
 
     # Create a curried version of the object method 
     # to use as a callback by non-object code
@@ -129,9 +132,6 @@ my $broker = shift;
     #   If there are any logfiles or db's to resolve for this metric,
     #   do it here to reduce overhead in the callback..
     #
-
-    # my $filespec = $self->{ 'logfile' };
-
     my @stores = @{ $self->{ stores } };  # Stores are treated as a special type of property of a metric
 
     print "\thandler: ", $self->{ name }, ", (", scalar @stores, ") ", join( ", ", @stores), ", ", "\n";
@@ -160,14 +160,22 @@ my $broker = shift;
                 die "Cannot lookup file ID $storeId: not defined \n";
             }
             else{
+
+                #
+                #  FIXME: Where are we handling multiple log files per metric here...?
+                #
                 print "File Obj Metadata: ", join( ", ", sort keys %{ $fileObj } ), "\n";
-                my $timeDateStamp = scalar localtime( time );
-                $timeDateStamp =~ s/\s/_/g;
+                my( $sec, $min, $hr, $mon, $day, $year, $dow, $xx, $xxx ) = localtime( time );
+                $year+= 1900;
+                my $timeDateStamp = sprintf( "%04d-%02d-%02dT%02d_%02d_%02d", 
+                                           $year, $mon, $day, $hr, $min, $sec );
+                # my $timeDateStamp = scalar localtime( time );
+                # $timeDateStamp =~ s/\s/_/g;
                 $fileSpec = $fileObj->property( 'directory') . "/" .
-                            $fileObj->property( 'basename' ) . "_" .
-                            $timeDateStamp . ".log";
+                            $timeDateStamp . "_" .
+                            $fileObj->property( 'basename' ) . ".log";
                 print "Filespec: $fileSpec\n";
-                $self->{ 'logfile' } = $fileSpec;
+                push @{ $self->{ 'logfiles' } }, $fileSpec;
             }
         }
     }
@@ -177,19 +185,21 @@ my $broker = shift;
     #   to the specified topic. The callback will be invoked
     #   on each new data event.
     #
-    # if( $Main::verbose ){
+    if( $main::verbose ){
         print "Subscribing to ", $self->{ 'topic' }, " on broker '$brokerIp'\n";
-    # }
+    }
 
     $mqttClient->subscribe( $self->{ 'topic' }, $self->{ 'CALLBACK' } );
     print "Subscription registered\n";
-    my $testTopic = "$0/$$"; 
-    $testTopic =~ s/^[.\/]*//;
-    $testTopic =~ s/\./_/g;
-    my $testMessage = '{"timedate":"'.scalar localtime( time ).'"}';
-    print "Publish 'Alive' message: Topic: $testTopic, Message: $testMessage\n";
-    $mqttClient->publish( $testTopic => $testMessage );
+
+    # my $testTopic = "$0/$$"; 
+    # $testTopic =~ s/^[.\/]*//;
+    # $testTopic =~ s/\./_/g;
+    # my $testMessage = '{"timedate":"' . scalar localtime( time ) . '"}';
+    # print "Publish 'Alive' message: Topic: $testTopic, Message: $testMessage\n";
+    # $mqttClient->publish( $testTopic => $testMessage );
     return( $mqttClient );
+
 }
 
 #
@@ -213,15 +223,20 @@ my $message = shift;
 
     print "Begin MQTT Callback:\n";
     
+    #
+    #   FIXME: This needs to be looked up from the Object Data
+    #
     my $storeType = 'file';
 
     if( $storeType eq 'file' ){
-        my $fileSpec = $self->{ logfile };
-        print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $filespec\n";
-        print "Updating log file '$fileSpec'\n";
-        open( LOG, ">>$fileSpec" ) || die "Cannot open $fileSpec for writing: $!\n";
-        print( LOG "'$topic' : $message\n" );
-        close( LOG );
+        foreach my $fileSpec ( @{ $self->{ logfiles } } ){
+            # my $fileSpec = $self->{ logfile };
+            print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $fileSpec\n";
+            print "Updating log file '$fileSpec'\n";
+            open( LOG, ">>$fileSpec" ) || die "Cannot open $fileSpec for writing: $!\n";
+            print( LOG "'$topic' : $message\n" );
+            close( LOG );
+        }
     }
     elsif( $storeType eq 'db' ){
         print "Store type 'DB' (not implemented)\n";
