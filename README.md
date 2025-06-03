@@ -28,6 +28,8 @@ TO DO:
  * EPICS metrics
  * EPICS stores
  * create filesystem directories at runtime if necessary
+ * Create reference JSON Config file and document configs
+ * Implement JSON 'include-file'
 
 
 See the Wiki for up-to-date and detailed information
