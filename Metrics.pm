@@ -238,7 +238,7 @@ my $message = shift;
         $xdataVal = $xdataPath->value( $message );
     }
     else{       # Use host localtime for Xdata 
-        my( $sec, $min, $hr, $mon, $day, $year, $dow, $xx, $xxx ) = localtime( time );
+        my( $sec, $min, $hr, $day, $mon, $year, $dow, $xx, $xxx ) = localtime( time );
         $year+= 1900;
         my $xdataVal = sprintf( "%04d-%02d-%02dT%02d_%02d_%02d", 
                                $year, $mon, $day, $hr, $min, $sec );

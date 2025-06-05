@@ -1,17 +1,12 @@
 #! /usr/bin/perl -w
 
 use strict;
-
-use JSON::XS;
 use JSON::Path;
-
 use Data::Dumper;
 
 
 #  Grab a whole file as specified on commandline
 #
-# print "ARGV[0] = $ARGV[0]\n";
-
 open( JSON_CFG, $ARGV[0] ) || die "Cannot read $ARGV[0] : $!\n";
 my @jsonText = <JSON_CFG>;
 my $jsonLines = scalar @jsonText;
@@ -24,7 +19,7 @@ close( JSON_CFG );
 #
 for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
     if( $jsonText[ $i ] =~ m/^\s*#/ ){
-        print( "Removing line " ,$i+$j, " :$jsonText[$i]" );
+        print( "Removing line " ,$i+$j, "$jsonText[$i]" );
         splice( @jsonText, $i, 1 );
         $jsonLines--;
         $i--;
@@ -34,7 +29,6 @@ for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
 
 # Convert the array data to a string 
 my $jsonText = join( "", @jsonText );
-
 
 # Create a JSON Parser and feed it the JSON string data
 # my $json = new JSON::XS;
@@ -68,34 +62,16 @@ my @pvsPaths     = $pvsPath->paths( $jsonText );
 #
 #   Keep a lookup, by objectId, of all top-level objects read
 #
-my %metrics = {};
-my %brokers = {};
-my %files = {};
-my %dbs = {};
-# my %stores = {};
-my %pvs = {};
+my %metrics = ();
+my %brokers = ();
+my %files = ();
+my %dbs = ();
+# my %stores = ();
+my %pvs = ();
 
     # ====================================================================
     #  Break out all top-level JSON Objects
     # ====================================================================
-
-    # -------------------------< Metrics >--------------------------------
-    if( defined( $metrics ) ){
-        print "\nMetricsPath: $metricsPath\n";
-        print "\t", join( ",\n\t", sort keys( %{ $metrics } ) ), "\n";
-        foreach my $metricId ( sort keys( %{ $metrics } ) ){
-            print "\n$metricsPath.$metricId\n";
-            my $metricPath = JSON::Path->new( "$metricsPath.$metricId" );
-            my ( $metricObj ) = $metricPath->values( $jsonText );  # Force array context
-            # hashDump( $metricObj );
-            my $metric = Metrics->new( name => $metricId );
-            $metrics{ $metricId } = $metric;
-            $metric->parse( $metricObj );
-        }        
-    }
-    else{
-        print "METRICS undefined\n";
-    }
 
 
     # -------------------------< Brokers >--------------------------------
@@ -105,8 +81,7 @@ my %pvs = {};
         foreach my $brokerId ( sort keys( %{ $brokers } ) ){
             print "\n$brokersPath.$brokerId\n";
             my $brokerPath = JSON::Path->new( "$brokersPath.$brokerId" );
-            my ( $brokerObj ) = $brokerPath->values( $jsonText );  # Force array context
-            # hashDump( $brokerObj );
+            my ( $brokerObj ) = $brokerPath->values( $jsonText );  # Parens force array context
             my $broker = Brokers->new( name => $brokerId );
             $brokers{ $brokerId } = $broker;
             $broker->parse( $brokerObj );
@@ -125,7 +100,6 @@ my %pvs = {};
             print "\n$filesPath.$fileId\n";
             my $filePath = JSON::Path->new( "$filesPath.$fileId" );
             my ( $fileObj ) = $filePath->values( $jsonText );  # Force array context
-            # hashDump( $fileObj );
             my $file = Files->new( name => $fileId );
             $files{ $fileId } = $file;
             $file->parse( $fileObj );
@@ -145,7 +119,6 @@ my %pvs = {};
             print "\n$dbsPath.$dbId\n";
             my $dbPath = JSON::Path->new( "$dbsPath.$dbId" );
             my ( $dbObj ) = $dbPath->values( $jsonText );  # Force array context
-            # hashDump( $dbObj );
             my $db = Dbs->new( name => $dbId );
             $dbs{ $dbId } = $db;
             $db->parse( $dbObj );
@@ -164,7 +137,6 @@ my %pvs = {};
             print "\n$pvsPath.$pvId\n";
             my $pvPath = JSON::Path->new( "$pvsPath.$pvId" );
             my ( $pvObj ) = $pvPath->values( $jsonText );  # Force array context
-            # hashDump( $pvObj );
             my $pv = Pvs->new( name => $pvId );
             $pvs{ $pvId } = $pv;
             $pv->parse( $pvObj );
@@ -172,6 +144,84 @@ my %pvs = {};
     }
     else{
         print "PVS undefined\n";
+    }
+
+    # -------------------------< Metrics >--------------------------------
+    #   We read the Metrics data last, so we can verify references 
+    #   to other parameter types in the Metrics parameters.
+    #
+    if( defined( $metrics ) ){
+        print "\nMetricsPath: $metricsPath\n";
+        print "\t", join( ",\n\t", sort keys( %{ $metrics } ) ), "\n";
+        foreach my $metricId ( sort keys( %{ $metrics } ) ){
+            print "\n$metricsPath.$metricId\n";
+            my $metricPath = JSON::Path->new( "$metricsPath.$metricId" );
+            my ( $metricObj ) = $metricPath->values( $jsonText );  # Force array context
+            # hashDump( $metricObj );
+            my $metric = Metrics->new( name => $metricId );
+            $metrics{ $metricId } = $metric;
+            $metric->parse( $metricObj );
+        }
+        foreach my $metricId ( sort keys %metrics ){
+            my $metric = $metrics{ $metricId };
+
+            #
+            #   Validate Stores
+            #   
+            my $metricStores = $metric->param( 'store' );
+            if( !defined( $metricStores ) ){
+                die "No stores for metric '$metricId' ";
+            }
+            else{
+                print "Stores for $metricId: $metricStores\n";
+                foreach my $metricStore ( @{ $metricStores } ){
+                    my ( $storeType ) = keys %{ $metricStore };
+                    my $storeValue = $metricStore->{ $storeType };
+                    print "Type: $storeType, Value: $storeValue\n";
+
+                    if( lc( $storeType)  eq 'file' ){
+                        if( !defined( $files{ $storeValue } ) ){
+                            print "Error: No 'file' store named $storeValue was defined\n";
+                        }
+                        else{
+                            hashDump( $files{ $storeValue } );
+                        }
+                    }
+                    elsif( lc( $storeType)  eq 'db' ){
+                        if( !defined( $dbs{ $storeValue } ) ){
+                            print "Error: No 'db' store named $storeValue was defined\n";
+                        }
+                        else{
+                            hashDump( $dbs{ $storeValue } );
+                        }
+                    }
+                    print "========\n";
+                }
+            }
+
+            #
+            #   Validate Brokers
+            #
+            my $metricBrokerId = $metric->param( 'broker' );
+            if( !defined( $metricBrokerId ) ){
+                die "No brokers for metric '$metricId' ";
+            }
+            else{
+                #
+                #   Only one broker to be used for each Metric
+                #
+                print "Broker: $metricBrokerId\n";
+                if( !defined( $brokers{ $metricBrokerId } ) ){
+                    die "Broker '$metricBrokerId' not defined\n";
+                }
+                else{
+                    hashDump( $brokers{ $metricBrokerId } );
+                }
+            }
+        }
+    }
+    else{
+        print "METRICS undefined\n";
     }
 
 
@@ -227,6 +277,23 @@ my $jsonObj = shift;
         }
     }
     return( $self );
+}
+
+sub param{
+my $self = shift;
+my $paramId = shift;
+
+    if( @_ ){
+        $self->${$paramId} = shift;
+    }
+    else{
+        if( exists( $self->{$paramId} ) ){
+            return( $self->{$paramId} );
+        }
+        else{
+            return undef;
+        }
+    }
 }
 
 1;

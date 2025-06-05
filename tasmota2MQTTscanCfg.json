@@ -27,7 +27,7 @@
         #   A metric specifying a non-existant IP:Port, for testing
         #
         "111_esp01_signal" : {
-#             "broker" : "fakebroker",
+#             "broker" : "brokebroker",
             "broker" : "opi3remote",
             "topic"  : "tele/tasmota_F74C1D/STATE",
             "ydata"  : "$.Wifi.Signal",
@@ -114,7 +114,7 @@
             "directory" : "/home/bomr/data/116",
             "basename"  : "lr_temperature"
         },
-        
+
         "rnIoT_esp01_temp" : {
             "directory" : "/home/bomr/data/116",
             "basename"  : "rn_IoT_eps01_temp"
@@ -131,7 +131,7 @@
             "ycolumn"  : "signal"
         },
         "esp32_signal" : {
-            "ddms"     : "postgresql", 
+            "dbms"     : "postgresql", 
             "database" : "111Home",
             "schema"   : "111_signal",
             "table"    : "111_esp32_signal",
