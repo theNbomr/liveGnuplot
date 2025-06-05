@@ -100,7 +100,7 @@ use constant LOGFILE_BASENAME => 'junkRN';
 # my @weekDays = ( "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" );
 
 my $help = undef;
-my $verbose = undef;
+our $verbose = undef;       # One verbose flag for all modules 
 # my $logDir = LOGFILE_DIR;
 # my $logBaseName = LOGFILE_BASENAME;
 # my $mqttBrokerIp = MQTT_BROKER_IP;
@@ -187,7 +187,7 @@ my %optHelp = (
     # the JSON data has been fully parsed.
     my %metricObjs;
     my %brokerObjs;
-    our  %fileObjs;
+    our %fileObjs;
     my %dbObjs;
     my @mqttClients;
 

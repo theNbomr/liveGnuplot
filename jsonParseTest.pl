@@ -11,39 +11,37 @@ use Data::Dumper;
 #  Grab a whole file as specified on commandline
 #
 # print "ARGV[0] = $ARGV[0]\n";
+
 open( JSON_CFG, $ARGV[0] ) || die "Cannot read $ARGV[0] : $!\n";
 my @jsonText = <JSON_CFG>;
+my $jsonLines = scalar @jsonText;
 close( JSON_CFG );
 
-# Convert the array data to a string 
-my $jsonText = join( "\n", @jsonText );
-# print $jsonText;
-
-# Create a JSON Parser and feed it the JSON string data
-my $json = new JSON::XS;
-my $jsonData = $json->decode( $jsonText );
-
-# Display the structured result of the parsed JSON string data.
-print Dumper( $jsonData );
-
-# find some specified elements in the JSON data.
-print $jsonData,"\n";
-
-foreach my $element ( keys %{ $jsonData } ){
-    print "JSON Element: $element\n";
-    my $jsonDataElement = $jsonData->{ $element };
-    # print "\t$jsonDataElement\n";
-    # print "\t$jsonData->{ $element }\n";
-    if( ref( $jsonDataElement ) eq 'ARRAY' ){
-        print "\tType ARRAY\n";
-    }
-    elsif( ref( $jsonDataElement ) eq 'HASH' ){
-        print "\tType HASH\n";
-    }
-    else{
-        print "\tType SCALAR\n";
+#
+#   the JSON standard doens't provide for comments, so we 
+#   delete any embedded comment lines before feeding it to 
+#   Perl packages that read JSON data.
+#
+for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
+    if( $jsonText[ $i ] =~ m/^\s*#/ ){
+        print( "Removing line " ,$i+$j, " :$jsonText[$i]" );
+        splice( @jsonText, $i, 1 );
+        $jsonLines--;
+        $i--;
+        $j++;
     }
 }
+
+# Convert the array data to a string 
+my $jsonText = join( "", @jsonText );
+
+
+# Create a JSON Parser and feed it the JSON string data
+# my $json = new JSON::XS;
+# my $jsonData = $json->decode( $jsonText );
+
+# Display the structured result of the parsed JSON string data.
+# print Dumper( $jsonData );
 
 # NOTE: literal strings expressing a JSON Path contain '$', and 
 # therefore must be crafted as single-quoted strings to 
@@ -52,169 +50,145 @@ foreach my $element ( keys %{ $jsonData } ){
 my $metricsPath = JSON::Path->new( '$.metrics' );
 my $brokersPath = JSON::Path->new( '$.mqtt_brokers' );
 my $filesPath   = JSON::Path->new( '$.files' );
+my $dbsPath     = JSON::Path->new( '$.dbs' );
+my $pvsPath     = JSON::Path->new( '$.pvs' );
 
 my $metrics = $metricsPath->value( $jsonText );
 my $brokers = $brokersPath->value( $jsonText );
 my $files   = $filesPath->value( $jsonText );
+my $dbs     = $dbsPath->value( $jsonText );
+my $pvs     = $pvsPath->value( $jsonText );
+
+my @metricsPaths = $metricsPath->paths( $jsonText );
+my @brokersPaths = $brokersPath->paths( $jsonText );
+my @filesPaths   = $filesPath->paths( $jsonText );
+my @dbsPaths     = $dbsPath->paths( $jsonText );
+my @pvsPaths     = $pvsPath->paths( $jsonText );
 
 #
-        #   JSON notation has the property that arrays of objects 
-        #   results in the (annoying) case that each object becomes 
-        #   a Perl hash with only a single key/value.
-        #
-        #     'mqtt_brokers' => [
-        #                         {
-        #                         'delldeb8' => {
-        #                                         'ip' => '192.168.0.19',
-        #                                         'port' => '1883'
-        #                                         }
-        #                         },
-        #                         {
-        #                         'delli3deb11' => {
-        #                                             'port' => '18883',
-        #                                             'ip' => '192.168.1.101'
-        #                                             }
-        #                         },
-        #                         {
-        #                         'orangepi3' => {
-        #                                             'ip' => '192.68.1.100',
-        #                                             'port' => '18883'
-        #                                         }
-        #                         }
-        #                     ],
+#   Keep a lookup, by objectId, of all top-level objects read
+#
+my %metrics = {};
+my %brokers = {};
+my %files = {};
+my %dbs = {};
+# my %stores = {};
+my %pvs = {};
 
-if( defined( $brokers ) ){      # Normally, an ARRAY Ref.
-    print "BROKERS:\n";
-    print "\tRef:", ref( $brokers ), "\n";
-    my %brokers = %{ $brokers };
-    my $brokerCount = scalar keys %brokers;
-    print ref( $brokers ), "($brokerCount) => ", join( ", ", keys %brokers ), "\n";
-    
-    foreach my $broker ( keys %brokers ){
-        print "\tBROKER:\n";
-        
-        if( ref( $broker ) eq 'HASH' ){     # A JSON Object; (the key is the Object name?)
-            my %broker = %{ $broker };
-            #  print join( ", ", keys %broker ),"\n";
-            foreach my $brokerParam ( keys %broker ){
-                print "\tBroker Id: $brokerParam\n";
-                my @brokerParams = $broker{ $brokerParam };
-                my %brokerParams = %{ shift @brokerParams };
-                print "\t\tParameters: ", join( ", ", keys %brokerParams ),"\n";
-                
-                my $brokerId = $brokerParam;
-                my $brokerPort;
-                my $brokerIp;
-                foreach my $key ( sort keys %brokerParams ){
-                    print "$key : ", $brokerParams{ $key };
-                    if( $key eq 'port' ){
-                        $brokerPort = $brokerParams{ $key };
-                    }
-                    elsif( $key eq 'ip' ){
-                        $brokerIp = $brokerParams{ $key };
-                    }
-                }
-                # open( \$broker{ $brokerID }, "mosquitto_sub -h $brokerIp -p $brokerPort -
-            }
-        }
-        else{
-            print "Not a HASH ref\n";
-        }
+    # ====================================================================
+    #  Break out all top-level JSON Objects
+    # ====================================================================
+
+    # -------------------------< Metrics >--------------------------------
+    if( defined( $metrics ) ){
+        print "\nMetricsPath: $metricsPath\n";
+        print "\t", join( ",\n\t", sort keys( %{ $metrics } ) ), "\n";
+        foreach my $metricId ( sort keys( %{ $metrics } ) ){
+            print "\n$metricsPath.$metricId\n";
+            my $metricPath = JSON::Path->new( "$metricsPath.$metricId" );
+            my ( $metricObj ) = $metricPath->values( $jsonText );  # Force array context
+            # hashDump( $metricObj );
+            my $metric = Metrics->new( name => $metricId );
+            $metrics{ $metricId } = $metric;
+            $metric->parse( $metricObj );
+        }        
+    }
+    else{
+        print "METRICS undefined\n";
+    }
+
+
+    # -------------------------< Brokers >--------------------------------
+    if( defined( $brokers ) ){
+        print "\nBrokersPath: $brokersPath\n";
+        print "\t", join( ",\n\t", sort keys( %{ $brokers } ) ), "\n";
+        foreach my $brokerId ( sort keys( %{ $brokers } ) ){
+            print "\n$brokersPath.$brokerId\n";
+            my $brokerPath = JSON::Path->new( "$brokersPath.$brokerId" );
+            my ( $brokerObj ) = $brokerPath->values( $jsonText );  # Force array context
+            # hashDump( $brokerObj );
+            my $broker = Brokers->new( name => $brokerId );
+            $brokers{ $brokerId } = $broker;
+            $broker->parse( $brokerObj );
+        }        
+    }
+    else{
+        print "BROKERS undefined\n";
+    }
+
+
+    # -------------------------< Files >--------------------------------
+    if( defined( $files ) ){
+        print "\nFilesPath: $filesPath\n";
+        print "\t", join( ",\n\t", sort keys( %{ $files } ) ), "\n";
+        foreach my $fileId ( sort keys( %{ $files } ) ){
+            print "\n$filesPath.$fileId\n";
+            my $filePath = JSON::Path->new( "$filesPath.$fileId" );
+            my ( $fileObj ) = $filePath->values( $jsonText );  # Force array context
+            # hashDump( $fileObj );
+            my $file = Files->new( name => $fileId );
+            $files{ $fileId } = $file;
+            $file->parse( $fileObj );
+        }        
+    }
+    else{
+        print "FILES undefined\n";
+    }
+
+
+
+    # -------------------------< DBs >--------------------------------
+    if( defined( $dbs ) ){
+        print "\nDbsPath: $dbsPath\n";
+        print "\t", join( ",\n\t", sort keys( %{ $dbs } ) ), "\n";
+        foreach my $dbId ( sort keys( %{ $dbs } ) ){
+            print "\n$dbsPath.$dbId\n";
+            my $dbPath = JSON::Path->new( "$dbsPath.$dbId" );
+            my ( $dbObj ) = $dbPath->values( $jsonText );  # Force array context
+            # hashDump( $dbObj );
+            my $db = Dbs->new( name => $dbId );
+            $dbs{ $dbId } = $db;
+            $db->parse( $dbObj );
+        }        
+    }
+    else{
+        print "DBS undefined\n";
+    }
+
+
+    # -------------------------< PVs >--------------------------------
+    if( defined( $pvs ) ){
+        print "\nPvsPath: $pvsPath\n";
+        print "\t", join( ",\n\t", sort keys( %{ $pvs } ) ), "\n";
+        foreach my $pvId ( sort keys( %{ $pvs } ) ){
+            print "\n$pvsPath.$pvId\n";
+            my $pvPath = JSON::Path->new( "$pvsPath.$pvId" );
+            my ( $pvObj ) = $pvPath->values( $jsonText );  # Force array context
+            # hashDump( $pvObj );
+            my $pv = Pvs->new( name => $pvId );
+            $pvs{ $pvId } = $pv;
+            $pv->parse( $pvObj );
+        }        
+    }
+    else{
+        print "PVS undefined\n";
+    }
+
+
+
+
+sub hashDump{
+my $hashRef = shift;
+
+    foreach my $key ( sort keys %{ $hashRef } ){
+        print "$key : ",$hashRef->{ $key },"\n";
     }
 }
-else{
-    print "BROKERS undefined\n";
-}
-
-if( defined( $metrics ) ){
-    print "METRICS:\n";
-    print "\tRef:", ref( $metrics ), "\n";
-    my %metrics = %{ $metrics };
-    foreach my $metric ( keys %metrics ){
-        my $metricId = $metric;
-        
-        my %metricParams = %{ $metrics{ $metric } };  # Drill down to list of metric properties
-        
-        print "\tMETRIC: $metricId: (", join( ", ", sort keys %{ $metrics{ $metric } } ), ")\n";
-        my %metricParam = %{ $metrics{ $metric } };
-        foreach my $metricKey ( sort keys %metricParam ){  #  Actually only one key/value pair per parameter
-            my $metricParamValue = $metricParam{ $metricKey };
-            print "\t\t$metricKey  ", $metricParamValue, "\n";
-
-            if( $metricKey eq 'broker' ){
-                my $brokerJPath = '$.mqtt_brokers.'.$metricParamValue;
-                print "\t\t\tLookup broker using '$brokerJPath'\n";
-            
-                #
-                #   Do a lookup of the specified parameter
-                #
-                my $brokerPath = JSON::Path->new( $brokerJPath );
-                my $brokerObject = $brokerPath->value( $jsonText );
-                if( defined( $brokerObject ) ){
-                    print "\t\t\tbroker Object: $brokerObject\n";
-                    if( 'HASH' eq ref( $brokerObject ) ){
-                        print "\t\t\tFound a broker object referenced by $brokerObject\n";
-                        
-                        # get the names and values of all broker parameters
-                        my %broker = %{ $brokerObject };
-                        foreach my $brokerProperty ( sort keys %broker ){
-                            print "\t\t\t\tbroker $brokerProperty : $broker{ $brokerProperty }\n";
-                        }
-                    }
-                }
-                else{
-                    print "No broker object '$metricParamValue' found\n";
-                }
-            }
-            
-            elsif( $metricKey eq 'storage' ){
-            
-                #
-                #   The metric's storage parameter is a list (hash) of files and/or dbs and/or...
-                #   First, find out how many objects are present in the storage parameter.
-                #
-                my $filesJPath = '$.files.'.$metricParamValue;
-                print "\t\t\tLookup file using '$filesJPath'\n";
-            
-                #
-                #   Do a lookup of the specified parameter
-                #
-                my $filesPath = JSON::Path->new( $filesJPath );
-                my $fileObject = $filesPath->value( $jsonText );
-                if( defined( $fileObject ) ){
-                    print "\t\t\tfile Object: $fileObject\n";
-                    if( 'HASH' eq ref( $fileObject ) ){
-                        print "\t\t\tFound a file object referenced by $fileObject\n";
-                        
-                        # get the names and values of all broker parameters
-                        my %file = %{ $fileObject };
-                        foreach my $fileProperty ( sort keys %file ){
-                            print "\t\t\t\tbroker $fileProperty : $file{ $fileProperty }\n";
-                        }
-                    }
-                }
-                else{
-                    print "No file object '$metricParamValue' found\n";
-                }
-            }
-        }                
-    }
-}
-else{
-    print "METRICS undefined\n";
-}
-
-# print Dumper $jsonData=>{ "Subscriptions" },"\n";
-# print Dumper $jsonData=>{ "Host" },"\n";
-    # foreach my $subscription( $jsonData->{ Subscriptions } ){
-    #     print Dumper( $subscription );
-    # }
-
     
     
 1;
 
-package metric;
+package Metrics;
 
 sub new {
 my $proto = shift;
@@ -224,12 +198,208 @@ my $self = {};
     bless $self, $class;
 
     my %params = @_;
-    foreach my $key ( keys %params ){
-        my $value = $params{ $key };
-        $self->{ $key } = $value;
-#         print "Key: $key, Value: $value\n";
-#         exit;
-    }
-    return $self;
-    
+    $self->parse( \%params );
+    return $self;   
 }
+
+
+
+sub parse{
+my $self = shift;
+my $jsonObj = shift;
+
+    foreach my $key ( keys %{ $jsonObj } ){
+        my $value = $jsonObj->{ $key };
+        if( ! ref( $value ) ){
+            print "Key => $key, Value=> $value\n";
+            $self->{ $key } = $value;
+        }
+        else{
+            if( ref( $value ) =~ m/^ARRAY/ ){
+                # print "$key is ARRAYref Type\n";
+                print "$key ARRAY: ", join( " | ", @{ $value } ), "\n";
+                $self->{ $key } = $value;
+            }
+            elsif( ref( $value ) =~ m/HASH/ ){
+                # print "$key is HASHref Type\n";
+                $self->{ $key } = $value;
+            }
+        }
+    }
+    return( $self );
+}
+
+1;
+
+package Brokers;
+
+sub new {
+my $proto = shift;
+my $class = ref( $proto ) || $proto;
+my $self = {};
+
+    bless $self, $class;
+
+    my %params = @_;
+    $self->parse( \%params );
+    return $self;   
+}
+
+
+
+sub parse{
+my $self = shift;
+my $jsonObj = shift;
+
+    foreach my $key ( keys %{ $jsonObj } ){
+        my $value = $jsonObj->{ $key };
+        if( ! ref( $value ) ){
+            print "Key => $key, Value=> $value\n";
+            $self->{ $key } = $value;
+        }
+        else{
+            if( ref( $value ) =~ m/^ARRAY/ ){
+                # print "$key is ARRAYref Type\n";
+                print "$key ARRAY: ", join( " | ", @{ $value } ), "\n";
+                $self->{ $key } = $value;
+            }
+            elsif( ref( $value ) =~ m/HASH/ ){
+                # print "$key is HASHref Type\n";
+                $self->{ $key } = $value;
+            }
+        }
+    }
+    return( $self );
+}
+
+
+package Files;
+
+sub new {
+my $proto = shift;
+my $class = ref( $proto ) || $proto;
+my $self = {};
+
+    bless $self, $class;
+
+    my %params = @_;
+    $self->parse( \%params );
+    return $self;   
+}
+
+
+
+sub parse{
+my $self = shift;
+my $jsonObj = shift;
+
+    foreach my $key ( keys %{ $jsonObj } ){
+        my $value = $jsonObj->{ $key };
+        if( ! ref( $value ) ){
+            print "Key => $key, Value=> $value\n";
+            $self->{ $key } = $value;
+        }
+        else{
+            if( ref( $value ) =~ m/^ARRAY/ ){
+                # print "$key is ARRAYref Type\n";
+                print "$key ARRAY: ", join( " | ", @{ $value } ), "\n";
+                $self->{ $key } = $value;
+            }
+            elsif( ref( $value ) =~ m/HASH/ ){
+                # print "$key is HASHref Type\n";
+                $self->{ $key } = $value;
+            }
+        }
+    }
+    return( $self );
+}
+
+1;
+
+
+package Dbs;
+
+sub new {
+my $proto = shift;
+my $class = ref( $proto ) || $proto;
+my $self = {};
+
+    bless $self, $class;
+
+    my %params = @_;
+    $self->parse( \%params );
+    return $self;   
+}
+
+
+
+sub parse{
+my $self = shift;
+my $jsonObj = shift;
+
+    foreach my $key ( keys %{ $jsonObj } ){
+        my $value = $jsonObj->{ $key };
+        if( ! ref( $value ) ){
+            print "Key => $key, Value=> $value\n";
+            $self->{ $key } = $value;
+        }
+        else{
+            if( ref( $value ) =~ m/^ARRAY/ ){
+                # print "$key is ARRAYref Type\n";
+                print "$key ARRAY: ", join( " | ", @{ $value } ), "\n";
+                $self->{ $key } = $value;
+            }
+            elsif( ref( $value ) =~ m/HASH/ ){
+                # print "$key is HASHref Type\n";
+                $self->{ $key } = $value;
+            }
+        }
+    }
+    return( $self );
+}
+
+1;
+
+
+package Pvs;
+
+sub new {
+my $proto = shift;
+my $class = ref( $proto ) || $proto;
+my $self = {};
+
+    bless $self, $class;
+
+    my %params = @_;
+    $self->parse( \%params );
+    return $self;   
+}
+
+
+
+sub parse{
+my $self = shift;
+my $jsonObj = shift;
+
+    foreach my $key ( keys %{ $jsonObj } ){
+        my $value = $jsonObj->{ $key };
+        if( ! ref( $value ) ){
+            print "Key => $key, Value=> $value\n";
+            $self->{ $key } = $value;
+        }
+        else{
+            if( ref( $value ) =~ m/^ARRAY/ ){
+                # print "$key is ARRAYref Type\n";
+                print "$key ARRAY: ", join( " | ", @{ $value } ), "\n";
+                $self->{ $key } = $value;
+            }
+            elsif( ref( $value ) =~ m/HASH/ ){
+                # print "$key is HASHref Type\n";
+                $self->{ $key } = $value;
+            }
+        }
+    }
+    return( $self );
+}
+
+1;

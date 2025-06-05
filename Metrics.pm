@@ -104,21 +104,21 @@ sub mqttClientInit {
 my $self = shift;
 my $broker = shift;
     my  %thisBroker = %{ $broker };
-    #if( $main::verbose ){
+    if( $main::verbose ){
         print "Launch MQTT Broker: name:", $broker->property( 'name' );
         print ", ip: ",   $broker->property( 'ip' );
         print ", port: ", $broker->property( 'port' ),"\n";
         print "All broker properties: ", join( ", ", $broker->properties() ),"\n";
-    #}
+    }
 
     my $brokerIp = $broker->property( 'ip' ).":";
     $brokerIp   .= $broker->property( 'port' );
     #
     #   Connect to the specified broker.
     #
-    # if( $main::verbose ){
+    if( $main::verbose ){
         print "Broker IP:port (Metrics) ", $brokerIp,"\n";
-    # }
+    }
 
     my $mqttClient = Net::MQTT::Simple->new( $brokerIp );
     if( $mqttClient ){
@@ -161,9 +161,6 @@ my $broker = shift;
             }
             else{
 
-                #
-                #  FIXME: Where are we handling multiple log files per metric here...?
-                #
                 print "File Obj Metadata: ", join( ", ", sort keys %{ $fileObj } ), "\n";
                 my( $sec, $min, $hr, $mon, $day, $year, $dow, $xx, $xxx ) = localtime( time );
                 $year+= 1900;
@@ -177,6 +174,9 @@ my $broker = shift;
                 print "Filespec: $fileSpec\n";
                 push @{ $self->{ 'logfiles' } }, $fileSpec;
             }
+        }
+        elsif( $storeType eq 'db' ){
+            print "Store Type 'db' not implemented\n";
         }
     }
 
@@ -228,13 +228,38 @@ my $message = shift;
     #
     my $storeType = 'file';
 
+    my $xdata = $self->{ xdata };
+    my $ydata = $self->{ ydata };
+    my $ydataPath = JSON::Path->new( $ydata );
+    my $xdataPath = JSON::Path->new( $xdata );
+    my $xdataVal;
+    my $ydataVal;
+    if( $xdata =~ m/^\$/ ){
+        $xdataVal = $xdataPath->value( $message );
+    }
+    else{       # Use host localtime for Xdata 
+        my( $sec, $min, $hr, $mon, $day, $year, $dow, $xx, $xxx ) = localtime( time );
+        $year+= 1900;
+        my $xdataVal = sprintf( "%04d-%02d-%02dT%02d_%02d_%02d", 
+                               $year, $mon, $day, $hr, $min, $sec );
+    }
+    if( $ydata =~ m/^\$/ ){
+        $ydataVal = $ydataPath->value( $message );
+    }
+    else{   # Assume the whole message is the data
+        $xdataVal = $message;
+    }
+    
+    #   FIXME:
+    #   Here, we're allowed to store the same metric in multiple logfiles.
+    #   We need to expand on this to allow multile *stores*.
+    #
     if( $storeType eq 'file' ){
         foreach my $fileSpec ( @{ $self->{ logfiles } } ){
-            # my $fileSpec = $self->{ logfile };
-            print "Metric '", $self->{ name }, "' :: '$topic' : \"$message\" ==> $fileSpec\n";
-            print "Updating log file '$fileSpec'\n";
+            print "Metric '", $self->{ name }, "' :: '$xdataVal' '$ydataVal' ==> $fileSpec\n";
             open( LOG, ">>$fileSpec" ) || die "Cannot open $fileSpec for writing: $!\n";
-            print( LOG "'$topic' : $message\n" );
+            # print( LOG "'$topic' : $message\n" );
+            print( LOG "$xdataVal $ydataVal\n" );
             close( LOG );
         }
     }
@@ -242,7 +267,6 @@ my $message = shift;
         print "Store type 'DB' (not implemented)\n";
     }
  
-    # $self->handleStores($topic, $message);
     print "END MQTT Callback\n";
     return '';
 }
