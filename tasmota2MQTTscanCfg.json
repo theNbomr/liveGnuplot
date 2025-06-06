@@ -9,7 +9,9 @@
         "comment_2" : "2025-May-20 RN thenbomr@gmail.com",
         "comment_3" : "2025-May-28 RN Work in progress <git@github.com:theNbomr/liveGnuplot.git>"
     },
-    
+
+#     "include" : "file" : "/home/bomr/data/pvs.json",
+
     "metrics" : { 
         "111_esp01_temperature" : {
             "broker" : "orangepi3",
@@ -96,27 +98,27 @@
     
     "files" : {
         "111_esp01_signal" : {
-            "directory" : "/home/bomr/data/wifi_strength",
+            "directory" : "/tmp/home/bomr/data/wifi_strength",
             "basename"  : "111_esp01_signal"
         },
         
         "111_esp32_signal" : {
-            "directory" : "/home/bomr/data/wifi_strength",
+            "directory" : "/tmp/home/bomr/data/wifi_strength",
             "basename"  : "111_esp32_signal"
         },
 
         "111_esp01_temperature" : {
-            "directory" : "/home/bomr/data/esp01_temperature",
+            "directory" : "/tmp/home/bomr/data/esp01_temperature",
             "basename"  : "111_esp01_temperature"
         },
 
         "116_lr_temperature" : {
-            "directory" : "/home/bomr/data/116",
+            "directory" : "/tmp/home/bomr/data/116",
             "basename"  : "lr_temperature"
         },
 
         "rnIoT_esp01_temp" : {
-            "directory" : "/home/bomr/data/116",
+            "directory" : "/tmp/home/bomr/data/116",
             "basename"  : "rn_IoT_eps01_temp"
         }
     },

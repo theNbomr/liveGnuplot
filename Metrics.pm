@@ -27,7 +27,7 @@ my $self = {};
     }
 
     $self->{ stores } = ();
-    $slef->{ logfiles } = ();
+    $self->{ logfiles } = ();
     $self->{ dbs } = ();
 
     # Create a curried version of the object method 
@@ -252,7 +252,7 @@ my $message = shift;
     
     #   FIXME:
     #   Here, we're allowed to store the same metric in multiple logfiles.
-    #   We need to expand on this to allow multile *stores*.
+    #   We need to expand on this to allow multiple *stores*.
     #
     if( $storeType eq 'file' ){
         foreach my $fileSpec ( @{ $self->{ logfiles } } ){
