@@ -293,6 +293,12 @@ my $paramId = shift;
     }
 }
 
+#
+#   This subroutine is just testbed code the kind of emulates the 
+#   state of a metric's callback context. It is being used to evaluate
+#   how callback context code can access the Broker, File, Db, and Pv 
+#   elements needed to service ther callback.
+#
 sub metricExternals {
 my $self = shift;
 
@@ -329,7 +335,7 @@ my $self = shift;
             die "Broker '$brokerId' not defined\n";
         }
         else{
-            main::hashDump( $main::brokers{ $brokerId }, "\t$self->{ name } broker: " );
+            # main::hashDump( $main::brokers{ $brokerId }, "\t$self->{ name } broker: " );
         }
     }
 
@@ -354,14 +360,14 @@ my $self = shift;
                     print "Error: No 'file' store named $storeValue was defined\n";
                 }
                 else{
-                    main::hashDump( $main::files{ $storeValue }, "\t".$self->{ name }."/".$storeType );
+                    # main::hashDump( $main::files{ $storeValue }, "\t".$self->{ name }."/".$storeType );
                     my $fileDir  = $main::files{ $storeValue }->{ directory };
                     my $fileName = $main::files{ $storeValue }->{ basename };
                     print "\t$self->{ name } Store[ File ]: $fileDir/$fileName\n";
 
                     if( ! -d $fileDir ){
                         print "\tCreating $fileDir\n";
-                        make_path( $fileDir, { mode => 0775 } );
+                        make_path( $fileDir, { mode => 0744 } );
                     }
                     else{
                         print "\tDirectory exists\n";
@@ -373,7 +379,7 @@ my $self = shift;
                     print "Error: No 'db' store named $storeValue was defined\n";
                 }
                 else{
-                    main::hashDump( $main::dbs{ $storeValue }, "\t".$self->{ name }. "/". $storeType );
+                    # main::hashDump( $main::dbs{ $storeValue }, "\t".$self->{ name }. "/". $storeType );
                 }
             }
             print "========\n";

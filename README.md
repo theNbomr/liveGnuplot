@@ -22,14 +22,15 @@ This repository now contains code fragments that are working toward a generic MQ
 The latter is presently the most challenging, requiring to get an Object instance callback subroutine to be used in the callback from Net::MQTT::Simple. [SOLVED]
 
 TO DO:
- * Extract xdata & ydata from JSON data per metric JPATH specifications
+ * Extract xdata & ydata from JSON data per metric JPATH specifications [Done, in Ver1 only]
  * Log file rotation
  * Log file duration specification
  * EPICS metrics
  * EPICS stores
- * create filesystem directories at runtime if necessary
+ * create filesystem directories at runtime if necessary [Done]
  * Create reference JSON Config file and document configs
  * Implement JSON 'include-file'
+ * Implement unit tests for parsing, epecially
 
 
 See the Wiki for up-to-date and detailed information
