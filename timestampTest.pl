@@ -41,17 +41,17 @@ my %timeFormatLookup = (
     '%n' => "%3s",
 );
 
-my @monthNames = [
+my @monthNames = (
     '',
     'Jan', 'Feb', 'Mar',
     'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep',
     'Oct', 'Nov', 'Dec'
-];
+);
 
-my @dowNames = [
-    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
-];
+my @dowNames = (
+    'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
+);
 
     my( $sec, $min, $hr, $mday, $mon, $year, $dow, $yday, $isdst ) = localtime( time );
     $year += 1900;
@@ -73,20 +73,31 @@ my @dowNames = [
     #     }
     # }
 
-    my $timeSpec = "%Y-%m-%dT%H:%M:%S";
+    # my $timeSpec = "%Y-%m-%dT%H:%M:%S";
+    my $timeSpec = $ARGV[0];
     my @timeElements;
-    while( my @matches = $timeSpec =~ m/%[YymdHMS]/ ){
+    while( my @matches = $timeSpec =~ m/%[YymdHMSnw]/ ){
         my $timeSpecMacro = $&;
-        my $timeElementIndex = $timeElementLookup{ $timeSpecMacro };
+        print "timeSpecMacro: $timeSpecMacro\n";
         my $formatString     = $timeFormatLookup{ $timeSpecMacro };
-        if( $timeElementIndex <= 5 ){
+
+        if( $timeSpecMacro eq '%w' ){
+            my $dayName = $dowNames[ $brokenDownTime[ 6 ] ];
+            # print "DayName : $dayName\n";
+            push @timeElements, $dayName;
+        }
+        elsif( $timeSpecMacro eq '%n' ){
+            my $monthName = $monthNames[ $brokenDownTime[ 4 ] ] ;
+            # print "MonthIndex: $monthIndex, MonthName: $monthName\n";
+            push @timeElements, $monthName;
+        }
+        elsif( $timeSpecMacro eq '%y' ){
+            my $timeElementIndex = $timeElementLookup{ $timeSpecMacro };
+            push @timeElements, $brokenDownTime[ $timeElementIndex ] % 100;
+        }
+        else{
+            my $timeElementIndex = $timeElementLookup{ $timeSpecMacro };
             push @timeElements, $brokenDownTime[ $timeElementIndex ];
-        }
-        elsif( $timeElementIndex == 6 ){
-            push @timeElements, $dowNames[ $brokenDownTime[ $timeElementIndex ] ];
-        }
-        elsif( $timeElementIndex == 7 ){
-            push @timeElements, $monthNames[ $brokenDownTime[ $timeElementIndex ] ];
         }
         $timeSpec =~ s/$timeSpecMacro/$formatString/g;
     }
