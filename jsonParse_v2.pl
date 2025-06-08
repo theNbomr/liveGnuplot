@@ -28,8 +28,12 @@ for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
         $i--;
         $j++;
     }
+
+    #
+    #   Check for prescence of an 'include' directive
+    #
     elsif( $jsonText[ $i ] =~ m/\"include"\s*:\s*{\s*"file"\s*:\s*"([^"]+)"\s*}/ ){
-        # "include" : { "file" : "/home/bomr/data/pvs.json" },
+        #                        "include" : { "file" : "/home/bomr/data/pvs.json" },
         my $includeFile = $1;
         if( -e $includeFile ){
             print "Found include file specifier : $includeFile at line ", 1+$i+$j, "\n";
@@ -38,11 +42,21 @@ for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
             my @includeFile = <INCLUDE>;
             close( INCLUDE );
 
-            my $newLines = scalar @includeFile;
+            #
+            #   Sigh... So much hassle to fix comma syntax in JSON.
+            chomp $includeFile[-1];
+            $includeFile[-1] .= "\n";
+            if( $i < $jsonLines && $includeFile[-1] =~ m/[^,]\s*\n$/ ){
+                # print "Adding trailing comma\n";
+                push @includeFile, ",\n";
+            }
+
             splice( @jsonText, $i, 1, @includeFile );
-            $jsonLines+= $newLines;
-            $jsonLines--;
+
+            # Recalculate array sizes and indices
+            $jsonLines = scalar @jsonText;
             $j--;
+            $i--;       # repeat inspection of the first inserted line
         }
         else{
             die "Include file '$includeFile' not found\n";
@@ -52,6 +66,12 @@ for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
 
 # Convert the array data to a string 
 my $jsonText = join( "", @jsonText );
+
+for my $l ( 1 .. scalar @jsonText ){
+    print "$l\t$jsonText[$l-1]";
+}
+die;
+
 
 # Create a JSON Parser and feed it the JSON string data
 # my $json = new JSON::XS;

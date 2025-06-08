@@ -9,8 +9,9 @@
         "comment_2" : "2025-May-20 RN thenbomr@gmail.com",
         "comment_3" : "2025-May-28 RN Work in progress <git@github.com:theNbomr/liveGnuplot.git>"
     },
-
+    # Pre-include comment
     "include" : { "file" : "/home/bomr/data/pvs.json" },
+    # Post-include comment. There should be a blank line following, and then '"metrics"'...
 
     "metrics" : { 
         "111_esp01_temperature" : {
