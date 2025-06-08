@@ -9,8 +9,11 @@
         "comment_2" : "2025-May-20 RN thenbomr@gmail.com",
         "comment_3" : "2025-May-28 RN Work in progress <git@github.com:theNbomr/liveGnuplot.git>"
     },
+    #  Q: If we're using JSON syntax for include-file functionality, shouldn't the
+    #     semantics follow JSON rules? ie. not on a line-by-line oriented basis?
+    #  A: Yup, probably, but it works for now, and it makes [enough] sense for human-maintained files.
     # Pre-include comment
-    "include" : { "file" : "/home/bomr/data/pvs.json" },
+    "include" : { "file" : "pvs.json", "filter" : "colon2html" },
     # Post-include comment. There should be a blank line following, and then '"metrics"'...
 
     "metrics" : { 

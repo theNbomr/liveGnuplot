@@ -1,11 +1,15 @@
+    
     "pvs" : { 
-        "IXYX:Q5:VOL" : {
-            "EPICS_CA_SERVER_PORT"   : 4002,
-            "EPICS_CA_REPEATER_PORT" : 4003
+    #
+    #   How do we deal with EPICS PV names that have embedded colons (':')
+    #   in the JSON notation? 
+    #
+        "IXYZ:Q5:VOL" : {
+            "EPICS_CA_SERVER_PORT"   : 9102,
+            "EPICS_CA_REPEATER_PORT" : 9101
         },
-        "IXYX:CG01:RDVAC" : {
-            "EPICS_CA_SERVER_PORT"   : 4002,
-            "EPICS_CA_REPEATER_PORT" : 4003
+        "IXYZ:CG01:RDVAC" : {
+            "EPICS_CA_SERVER_PORT"   : 9002,
+            "EPICS_CA_REPEATER_PORT" : 9001
         }
     }
-,

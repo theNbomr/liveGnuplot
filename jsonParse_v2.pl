@@ -21,6 +21,10 @@ close( JSON_CFG );
 #   Perl packages that read JSON data.
 #
 for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
+
+    #
+    #   Remove comment lines
+    #
     if( $jsonText[ $i ] =~ m/^\s*#/ ){
         print( "Removing line " ,$i+$j, "$jsonText[$i]" );
         splice( @jsonText, $i, 1 );
@@ -30,9 +34,9 @@ for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
     }
 
     #
-    #   Check for prescence of an 'include' directive
+    #   Check for prescence of an 'include' directive (FIXME: Must be a single text line)
     #
-    elsif( $jsonText[ $i ] =~ m/\"include"\s*:\s*{\s*"file"\s*:\s*"([^"]+)"\s*}/ ){
+    elsif( $jsonText[ $i ] =~ m/\"include"\s*:\s*{\s*"file"\s*:\s*"([^"]+)".*}/ ){
         #                        "include" : { "file" : "/home/bomr/data/pvs.json" },
         my $includeFile = $1;
         if( -e $includeFile ){
@@ -62,15 +66,25 @@ for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
             die "Include file '$includeFile' not found\n";
         }
     }
+
+    #
+    #   HTML-ize JSON Object names that have embedded colons
+    #
+    elsif( $jsonText[ $i ] =~ m/("[^"]+:[^"]+")\s*:/ ){
+        my $pvName = $1;
+        # print "$& ==> $pvName\n";
+        $pvName =~ s/:/&#58;/g;
+        $jsonText[ $i ] =~ s/("[^"]+:[^"]+")/$pvName/g;
+    }
 }
+
+    # for my $l ( 1 .. scalar @jsonText ){
+    #     print "$l\t$jsonText[$l-1]";
+    # }
+    # die;
 
 # Convert the array data to a string 
 my $jsonText = join( "", @jsonText );
-
-for my $l ( 1 .. scalar @jsonText ){
-    print "$l\t$jsonText[$l-1]";
-}
-die;
 
 
 # Create a JSON Parser and feed it the JSON string data
@@ -177,6 +191,8 @@ our %pvs = ();
         print "\nPvsPath: $pvsPath\n";
         print "\t", join( ",\n\t", sort keys( %{ $pvs } ) ), "\n";
         foreach my $pvId ( sort keys( %{ $pvs } ) ){
+            # $pvId = "'$pvId'";
+            $pvId =~ s/:/&#58;/g;
             print "\n$pvsPath.$pvId\n";
             my $pvPath = JSON::Path->new( "$pvsPath.$pvId" );
             my ( $pvObj ) = $pvPath->values( $jsonText );  # Force array context
@@ -631,6 +647,25 @@ use parent 'TopLevel';
 package Pvs;
 
 use parent 'TopLevel';
+
+sub new {
+my $proto = shift;
+my $class = ref( $proto ) || $proto;
+my $self = {};
+
+    bless $self, $class;
+
+    my %params = @_;
+
+    #
+    # Un-HTML-ize parameter name that may contain colons (illegal JSON value)
+    #
+    print "Unescaping PV name $params{ name }\n";
+    $params{ name } =~ s/&#58;/:/g;
+    $self->parse( \%params );
+    return $self;   
+}
+
 
 1;
 

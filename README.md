@@ -24,12 +24,13 @@ The latter is presently the most challenging, requiring to get an Object instanc
 TO DO:
  * Extract xdata & ydata from JSON data per metric JPATH specifications [Done, in Ver1 only]
  * Log file rotation
- * Log file duration specification
+ * Log file duration specification [In Progress: timeUtils.pm]
  * EPICS metrics
  * EPICS stores
  * create filesystem directories at runtime if necessary [Done]
  * Create reference JSON Config file and document configs
- * Implement JSON 'include-file'
+ * Implement JSON 'include-file' [Done, needs tests & refinement]
+ * timestamp creation for logfile names and possibly for log records
  * Implement unit tests for parsing, epecially
 
 
