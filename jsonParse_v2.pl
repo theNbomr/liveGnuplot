@@ -16,7 +16,7 @@ my $jsonLines = scalar @jsonText;
 close( JSON_CFG );
 
 #
-#   the JSON standard doens't provide for comments, so we 
+#   the JSON standard doesn't provide for comments, so we 
 #   delete any embedded comment lines before feeding it to 
 #   Perl packages that read JSON data.
 #
@@ -27,6 +27,26 @@ for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
         $jsonLines--;
         $i--;
         $j++;
+    }
+    elsif( $jsonText[ $i ] =~ m/\"include"\s*:\s*{\s*"file"\s*:\s*"([^"]+)"\s*}/ ){
+        # "include" : { "file" : "/home/bomr/data/pvs.json" },
+        my $includeFile = $1;
+        if( -e $includeFile ){
+            print "Found include file specifier : $includeFile at line ", 1+$i+$j, "\n";
+
+            open( INCLUDE, $includeFile ) || die "Cannot read include file : $includeFile : $!\n";
+            my @includeFile = <INCLUDE>;
+            close( INCLUDE );
+
+            my $newLines = scalar @includeFile;
+            splice( @jsonText, $i, 1, @includeFile );
+            $jsonLines+= $newLines;
+            $jsonLines--;
+            $j--;
+        }
+        else{
+            die "Include file '$includeFile' not found\n";
+        }
     }
 }
 

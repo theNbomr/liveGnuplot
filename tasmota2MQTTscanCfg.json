@@ -10,7 +10,7 @@
         "comment_3" : "2025-May-28 RN Work in progress <git@github.com:theNbomr/liveGnuplot.git>"
     },
 
-#     "include" : "file" : "/home/bomr/data/pvs.json",
+    "include" : { "file" : "/home/bomr/data/pvs.json" },
 
     "metrics" : { 
         "111_esp01_temperature" : {

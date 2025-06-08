@@ -3,6 +3,7 @@ use warnings;
 
 sub timeSpec2String($);
 sub timeSpec2Fmt($);
+sub timeSpec2FmtInd($);
 
 my @localtimeArgs = [
     'sec', 'minute', 'hour', 
@@ -55,15 +56,12 @@ my @dowNames = (
     'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
 );
 
-        # my @brokenDownTime = localtime( time );
-        # $brokenDownTime[ $timeElementLookup{ '%Y'} ] += 1900;
-        # $brokenDownTime[ $timeElementLookup{ '%m'} ] += 1;
 
-        # foreach my $timeSpec ( @ARGV ){
-        #     print "timeSpec: $timeSpec\n";
-        #     print timeSpec2String( $timeSpec );
-        # }
-
+#
+#   Convert the present time to a string of the specified format.
+#   Uses mainly the same macro names as the Linux date command, and
+#   the gnuplot utility. Added the '%w' (DayName) and '%n' (MonthName) macros
+#
 sub timeSpec2String($) {
 my $timeSpec = shift;
 
