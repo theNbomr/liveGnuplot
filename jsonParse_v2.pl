@@ -5,6 +5,7 @@ use strict;
 use lib ".";
 
 use JSON::Path;
+require epicsCA;
 
 # use Data::Dumper;
 
@@ -12,87 +13,12 @@ use JSON::Path;
 #
 open( JSON_CFG, $ARGV[0] ) || die "Cannot read $ARGV[0] : $!\n";
 my @jsonText = <JSON_CFG>;
-my $jsonLines = scalar @jsonText;
 close( JSON_CFG );
 
 #
-#   the JSON standard doesn't provide for comments, so we 
-#   delete any embedded comment lines before feeding it to 
-#   Perl packages that read JSON data.
+#   Preprocessor removes comments and expands 'include files'
 #
-for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
-
-    #
-    #   Remove comment lines
-    #
-    if( $jsonText[ $i ] =~ m/^\s*#/ ){
-        print( "Removing line " ,$i+$j, "$jsonText[$i]" );
-        splice( @jsonText, $i, 1 );
-        $jsonLines--;
-        $i--;
-        $j++;
-    }
-
-    #
-    #   Check for prescence of an 'include' directive (FIXME: Must be a single text line)
-    #
-    elsif( $jsonText[ $i ] =~ m/\"include"\s*:\s*{\s*"file"\s*:\s*"([^"]+)".*}/ ){
-        #                        "include" : { "file" : "/home/bomr/data/pvs.json" },
-        my $includeFile = $1;
-        if( -e $includeFile ){
-            print "Found include file specifier : $includeFile at line ", 1+$i+$j, "\n";
-
-            open( INCLUDE, $includeFile ) || die "Cannot read include file : $includeFile : $!\n";
-            my @includeFile = <INCLUDE>;
-            close( INCLUDE );
-
-            #
-            #   Sigh... So much hassle to fix comma syntax in JSON.
-            chomp $includeFile[-1];
-            $includeFile[-1] .= "\n";
-            if( $i < $jsonLines && $includeFile[-1] =~ m/[^,]\s*\n$/ ){
-                # print "Adding trailing comma\n";
-                push @includeFile, ",\n";
-            }
-
-            splice( @jsonText, $i, 1, @includeFile );
-
-            # Recalculate array sizes and indices
-            $jsonLines = scalar @jsonText;
-            $j--;
-            $i--;       # repeat inspection of the first inserted line
-        }
-        else{
-            die "Include file '$includeFile' not found\n";
-        }
-    }
-
-    #
-    #   HTML-ize JSON Object names that have embedded colons
-    #
-    elsif( $jsonText[ $i ] =~ m/("[^"]+:[^"]+")\s*:/ ){
-        my $pvName = $1;
-        # print "$& ==> $pvName\n";
-        $pvName =~ s/:/&#58;/g;
-        $jsonText[ $i ] =~ s/("[^"]+:[^"]+")/$pvName/g;
-    }
-}
-
-    # for my $l ( 1 .. scalar @jsonText ){
-    #     print "$l\t$jsonText[$l-1]";
-    # }
-    # die;
-
-# Convert the array data to a string 
-my $jsonText = join( "", @jsonText );
-
-
-# Create a JSON Parser and feed it the JSON string data
-# my $json = new JSON::XS;
-# my $jsonData = $json->decode( $jsonText );
-
-# Display the structured result of the parsed JSON string data.
-# print Dumper( $jsonData );
+my $jsonText = preprocessJson( \@jsonText );
 
 # NOTE: literal strings expressing a JSON Path contain '$', and 
 # therefore must be crafted as single-quoted strings to 
@@ -126,165 +52,252 @@ our %dbs = ();
 our %stores = ();
 our %pvs = ();
 
-    # ====================================================================
-    #  Break out all top-level JSON Objects
-    # ====================================================================
+# ====================================================================
+#  Break out all top-level JSON Objects
+# ====================================================================
 
 
-    # -------------------------< Brokers >--------------------------------
-    if( defined( $brokers ) ){
-        print "\nBrokersPath: $brokersPath\n";
-        print "\t", join( ",\n\t", sort keys( %{ $brokers } ) ), "\n";
-        foreach my $brokerId ( sort keys( %{ $brokers } ) ){
-            print "\n$brokersPath.$brokerId\n";
-            my $brokerPath = JSON::Path->new( "$brokersPath.$brokerId" );
-            my ( $brokerObj ) = $brokerPath->values( $jsonText );  # Parens force array context
-            my $broker = Brokers->new( name => $brokerId );
-            $brokers{ $brokerId } = $broker;
-            $broker->parse( $brokerObj );
-        }        
+# -------------------------< Brokers >--------------------------------
+if( defined( $brokers ) ){
+    print "\nBrokersPath: $brokersPath\n";
+    print "\t", join( ",\n\t", sort keys( %{ $brokers } ) ), "\n";
+    foreach my $brokerId ( sort keys( %{ $brokers } ) ){
+        print "\n$brokersPath.$brokerId\n";
+        my $brokerPath = JSON::Path->new( "$brokersPath.$brokerId" );
+        my ( $brokerObj ) = $brokerPath->values( $jsonText );  # Parens force array context
+        my $broker = Brokers->new( name => $brokerId );
+        $brokers{ $brokerId } = $broker;
+        $broker->parse( $brokerObj );
+    }        
+}
+else{
+    print "BROKERS undefined\n";
+}
+
+
+# -------------------------< Files >--------------------------------
+if( defined( $files ) ){
+    print "\nFilesPath: $filesPath\n";
+    print "\t", join( ",\n\t", sort keys( %{ $files } ) ), "\n";
+    foreach my $fileId ( sort keys( %{ $files } ) ){
+        print "\n$filesPath.$fileId\n";
+        my $filePath = JSON::Path->new( "$filesPath.$fileId" );
+        my ( $fileObj ) = $filePath->values( $jsonText );  # Force array context
+        my $file = Files->new( name => $fileId );
+        $files{ $fileId } = $file;
+        $file->parse( $fileObj );
+    }        
+}
+else{
+    print "FILES undefined\n";
+}
+
+
+
+# -------------------------< DBs >--------------------------------
+if( defined( $dbs ) ){
+    print "\nDbsPath: $dbsPath\n";
+    print "\t", join( ",\n\t", sort keys( %{ $dbs } ) ), "\n";
+    foreach my $dbId ( sort keys( %{ $dbs } ) ){
+        print "\n$dbsPath.$dbId\n";
+        my $dbPath = JSON::Path->new( "$dbsPath.$dbId" );
+        my ( $dbObj ) = $dbPath->values( $jsonText );  # Force array context
+        my $db = Dbs->new( name => $dbId );
+        $dbs{ $dbId } = $db;
+        $db->parse( $dbObj );
+    }        
+}
+else{
+    print "DBS undefined\n";
+}
+
+
+# -------------------------< PVs >--------------------------------
+if( defined( $pvs ) ){
+    print "\nPvsPath: $pvsPath\n";
+    print "\t", join( ",\n\t", sort keys( %{ $pvs } ) ), "\n";
+    foreach my $pvId ( sort keys( %{ $pvs } ) ){
+        # $pvId = "'$pvId'";
+        $pvId =~ s/:/&#58;/g;
+        print "\n$pvsPath.$pvId\n";
+        my $pvPath = JSON::Path->new( "$pvsPath.$pvId" );
+        my ( $pvObj ) = $pvPath->values( $jsonText );  # Force array context
+        my $pv = Pvs->new( name => $pvId );
+        $pvs{ $pvId } = $pv;
+        $pv->parse( $pvObj );
+    }        
+}
+else{
+    print "PVS undefined\n";
+}
+
+#--------------------------------------------------------------------------
+#    All JSON data processed and parsed
+#--------------------------------------------------------------------------
+    print "\n---------------------------------------------------------------\n";
+    print "All JSON data processed and parsed\n";
+    print "---------------------------------------------------------------\n\n";
+
+
+
+# -------------------------< Metrics >--------------------------------
+#   We read the Metrics data last, so we can verify references to 
+#   other parameter types (brokers, stores, etc) in the Metrics parameters.
+#
+if( defined( $metrics ) ){
+    print "\nMetricsPath: $metricsPath\n";
+    print "\t", join( ",\n\t", sort keys( %{ $metrics } ) ), "\n";
+    foreach my $metricId ( sort keys( %{ $metrics } ) ){
+        print "\n$metricsPath.$metricId\n";
+        my $metricPath = JSON::Path->new( "$metricsPath.$metricId" );
+        my ( $metricObj ) = $metricPath->values( $jsonText );  # Force array context
+        # hashDump( $metricObj );
+        my $metric = Metrics->new( name => $metricId );
+        $metrics{ $metricId } = $metric;
+        $metric->parse( $metricObj );
     }
-    else{
-        print "BROKERS undefined\n";
+    foreach my $metricId ( sort keys %metrics ){
+        my $metric = $metrics{ $metricId };
+
+        #
+        #   Validate Stores
+        #   
+        my $stores = $metric->param( 'store' );
+        if( !defined( $stores ) ){
+            die "No stores for metric '$metricId' ";
+        }
+        else{
+            print "Stores for $metricId: $stores\n";
+            foreach my $store ( @{ $stores } ){
+                my ( $storeType ) = keys %{ $store };
+                my $storeValue = $store->{ $storeType };
+                print "Type: $storeType, Value: $storeValue\n";
+
+                if( lc( $storeType)  eq 'file' ){
+                    if( !defined( $files{ $storeValue } ) ){
+                        print "Error: No 'file' store named $storeValue was defined\n";
+                    }
+                    else{
+                        hashDump( $files{ $storeValue }, $metricId, "/", $storeType );
+                    }
+                }
+                elsif( lc( $storeType)  eq 'db' ){
+                    if( !defined( $dbs{ $storeValue } ) ){
+                        print "Error: No 'db' store named $storeValue was defined\n";
+                    }
+                    else{
+                        hashDump( $dbs{ $storeValue }, $metricId, "/", $storeType );
+                    }
+                }
+                print "========\n";
+            }
+        }
+
+        #
+        #   Validate Brokers
+        #
+        my $metricBrokerId = $metric->param( 'broker' );
+        if( !defined( $metricBrokerId ) ){
+            die "No brokers for metric '$metricId' ";
+        }
+        else{
+            #
+            #   Only one broker to be used for each Metric
+            #
+            print "Broker: $metricBrokerId\n";
+            if( !defined( $brokers{ $metricBrokerId } ) ){
+                die "Broker '$metricBrokerId' not defined\n";
+            }
+            else{
+                hashDump( $brokers{ $metricBrokerId }, "$metricId broker: " );
+            }
+        }
+        $metric->metricExternals();
     }
-
-
-    # -------------------------< Files >--------------------------------
-    if( defined( $files ) ){
-        print "\nFilesPath: $filesPath\n";
-        print "\t", join( ",\n\t", sort keys( %{ $files } ) ), "\n";
-        foreach my $fileId ( sort keys( %{ $files } ) ){
-            print "\n$filesPath.$fileId\n";
-            my $filePath = JSON::Path->new( "$filesPath.$fileId" );
-            my ( $fileObj ) = $filePath->values( $jsonText );  # Force array context
-            my $file = Files->new( name => $fileId );
-            $files{ $fileId } = $file;
-            $file->parse( $fileObj );
-        }        
-    }
-    else{
-        print "FILES undefined\n";
-    }
+}
+else{
+    print "METRICS undefined\n";
+}
 
 
 
-    # -------------------------< DBs >--------------------------------
-    if( defined( $dbs ) ){
-        print "\nDbsPath: $dbsPath\n";
-        print "\t", join( ",\n\t", sort keys( %{ $dbs } ) ), "\n";
-        foreach my $dbId ( sort keys( %{ $dbs } ) ){
-            print "\n$dbsPath.$dbId\n";
-            my $dbPath = JSON::Path->new( "$dbsPath.$dbId" );
-            my ( $dbObj ) = $dbPath->values( $jsonText );  # Force array context
-            my $db = Dbs->new( name => $dbId );
-            $dbs{ $dbId } = $db;
-            $db->parse( $dbObj );
-        }        
-    }
-    else{
-        print "DBS undefined\n";
-    }
+exit(0);
 
 
-    # -------------------------< PVs >--------------------------------
-    if( defined( $pvs ) ){
-        print "\nPvsPath: $pvsPath\n";
-        print "\t", join( ",\n\t", sort keys( %{ $pvs } ) ), "\n";
-        foreach my $pvId ( sort keys( %{ $pvs } ) ){
-            # $pvId = "'$pvId'";
-            $pvId =~ s/:/&#58;/g;
-            print "\n$pvsPath.$pvId\n";
-            my $pvPath = JSON::Path->new( "$pvsPath.$pvId" );
-            my ( $pvObj ) = $pvPath->values( $jsonText );  # Force array context
-            my $pv = Pvs->new( name => $pvId );
-            $pvs{ $pvId } = $pv;
-            $pv->parse( $pvObj );
-        }        
-    }
-    else{
-        print "PVS undefined\n";
-    }
 
-    # -------------------------< Metrics >--------------------------------
-    #   We read the Metrics data last, so we can verify references 
-    #   to other parameter types (brokers, stores) in the Metrics parameters.
+sub preprocessJson {
+my $jsonData = shift;
+my @jsonText = @{ $jsonData };
+
     #
-    if( defined( $metrics ) ){
-        print "\nMetricsPath: $metricsPath\n";
-        print "\t", join( ",\n\t", sort keys( %{ $metrics } ) ), "\n";
-        foreach my $metricId ( sort keys( %{ $metrics } ) ){
-            print "\n$metricsPath.$metricId\n";
-            my $metricPath = JSON::Path->new( "$metricsPath.$metricId" );
-            my ( $metricObj ) = $metricPath->values( $jsonText );  # Force array context
-            # hashDump( $metricObj );
-            my $metric = Metrics->new( name => $metricId );
-            $metrics{ $metricId } = $metric;
-            $metric->parse( $metricObj );
-        }
-        foreach my $metricId ( sort keys %metrics ){
-            my $metric = $metrics{ $metricId };
+    #   the JSON standard doesn't provide for comments, so we 
+    #   delete any embedded comment lines before feeding it to 
+    #   Perl packages that read JSON data.
+    #
+    my $jsonLines = scalar @jsonText;
+    for( my $i = 0, my $j = 0; $i < $jsonLines; $i++ ){
 
-            #
-            #   Validate Stores
-            #   
-            my $stores = $metric->param( 'store' );
-            if( !defined( $stores ) ){
-                die "No stores for metric '$metricId' ";
+        #
+        #   Remove comment lines
+        #
+        if( $jsonText[ $i ] =~ m/^\s*#/ ){
+            print( "Removing line " ,$i+$j, "$jsonText[$i]" );
+            splice( @jsonText, $i, 1 );
+            $jsonLines--;
+            $i--;
+            $j++;
+        }
+
+        #
+        #   Check for prescence of an 'include' directive (FIXME: Must be a single text line)
+        #
+        elsif( $jsonText[ $i ] =~ m/\"include"\s*:\s*{\s*"file"\s*:\s*"([^"]+)".*}/ ){
+            #                        "include" : { "file" : "/home/bomr/data/pvs.json" },
+            my $includeFile = $1;
+            if( -e $includeFile ){
+                print "Found include file specifier : $includeFile at line ", 1+$i+$j, "\n";
+
+                open( INCLUDE, $includeFile ) || die "Cannot read include file : $includeFile : $!\n";
+                my @includeFile = <INCLUDE>;
+                close( INCLUDE );
+
+                #
+                #   Sigh... So much hassle to fix comma syntax in JSON.
+                chomp $includeFile[-1];
+                $includeFile[-1] .= "\n";
+                if( $i < $jsonLines && $includeFile[-1] =~ m/[^,]\s*\n$/ ){
+                    # print "Adding trailing comma\n";
+                    push @includeFile, ",\n";
+                }
+
+                splice( @jsonText, $i, 1, @includeFile );
+
+                # Recalculate array sizes and indices
+                $jsonLines = scalar @jsonText;
+                $j--;
+                $i--;       # repeat inspection of the first inserted line
             }
             else{
-                print "Stores for $metricId: $stores\n";
-                foreach my $store ( @{ $stores } ){
-                    my ( $storeType ) = keys %{ $store };
-                    my $storeValue = $store->{ $storeType };
-                    print "Type: $storeType, Value: $storeValue\n";
+                die "Include file '$includeFile' not found\n";
+            }
+        }
 
-                    if( lc( $storeType)  eq 'file' ){
-                        if( !defined( $files{ $storeValue } ) ){
-                            print "Error: No 'file' store named $storeValue was defined\n";
-                        }
-                        else{
-                            hashDump( $files{ $storeValue }, $metricId, "/", $storeType );
-                        }
-                    }
-                    elsif( lc( $storeType)  eq 'db' ){
-                        if( !defined( $dbs{ $storeValue } ) ){
-                            print "Error: No 'db' store named $storeValue was defined\n";
-                        }
-                        else{
-                            hashDump( $dbs{ $storeValue }, $metricId, "/", $storeType );
-                        }
-                    }
-                    print "========\n";
-                }
-            }
-
-            #
-            #   Validate Brokers
-            #
-            my $metricBrokerId = $metric->param( 'broker' );
-            if( !defined( $metricBrokerId ) ){
-                die "No brokers for metric '$metricId' ";
-            }
-            else{
-                #
-                #   Only one broker to be used for each Metric
-                #
-                print "Broker: $metricBrokerId\n";
-                if( !defined( $brokers{ $metricBrokerId } ) ){
-                    die "Broker '$metricBrokerId' not defined\n";
-                }
-                else{
-                    hashDump( $brokers{ $metricBrokerId }, "$metricId broker: " );
-                }
-            }
-            $metric->metricExternals();
+        #
+        #   HTML-ize JSON Object names that have embedded colons
+        #
+        elsif( $jsonText[ $i ] =~ m/("[^"]+:[^"]+")\s*:/ ){
+            my $pvName = $1;
+            # print "$& ==> $pvName\n";
+            $pvName =~ s/:/&#58;/g;
+            $jsonText[ $i ] =~ s/("[^"]+:[^"]+")/$pvName/g;
         }
     }
-    else{
-        print "METRICS undefined\n";
-    }
 
+    # Convert the array data to a string 
+    my $jsonText = join( "", @jsonText );
 
+    return( $jsonText );
+}
 
 
 sub hashDump{
@@ -332,25 +345,8 @@ my $jsonObj = shift;
     return( $self );
 }
 
-sub param{
-my $self = shift;
-my $paramId = shift;
-
-    if( @_ ){
-        $self->${$paramId} = shift;
-    }
-    else{
-        if( exists( $self->{$paramId} ) ){
-            return( $self->{$paramId} );
-        }
-        else{
-            return undef;
-        }
-    }
-}
-
 #
-#   This subroutine is just testbed code the kind of emulates the 
+#   This subroutine is just testbed code that kind of emulates the 
 #   state of a metric's callback context. It is being used to evaluate
 #   how callback context code can access the Broker, File, Db, and Pv 
 #   elements needed to service ther callback.
@@ -430,13 +426,31 @@ my $self = shift;
                     }
                 }
             }
-            elsif( lc( $storeType)  eq 'db' ){
+            elsif( lc( $storeType ) eq 'db' ){
                 if( !defined( $main::dbs{ $storeValue } ) ){
                     print "Error: No 'db' store named $storeValue was defined\n";
                 }
                 else{
                     # main::hashDump( $main::dbs{ $storeValue }, "\t".$self->{ name }. "/". $storeType );
                 }
+            }
+            elsif( lc( $storeType ) eq 'pv' ){
+                #
+                #   Lookup the PV object, and get the PV name and optionally, EPICS_CA_parameters,
+                #   Send a number to the EPICS PV
+                #
+                if( !defined( $main::pvs{ $storeValue } ) ){
+                    print "Error: No 'pv' store named $storeValue was defined\n";
+                }
+                else{
+                    # main::hashDump( $main::dbs{ $storeValue }, "\t".$self->{ name }. "/". $storeType );
+                    my $pvObj = $main::pvs{ $storeValue };
+                    my $pvName       = $pvObj->param( "name " );
+                    my $serverPort   = $pvObj->param( "EPICS_CA_SERVER_PORT" );
+                    my $repeaterPort = $pvObj->param( "EPICS_CA_REPEATER_PORT" );
+                    print "caPut( $pvName, 3.1415926, $serverPort, $repeaterPort )\n";
+                }
+
             }
             print "========\n";
         }
@@ -660,7 +674,7 @@ my $self = {};
     #
     # Un-HTML-ize parameter name that may contain colons (illegal JSON value)
     #
-    print "Unescaping PV name $params{ name }\n";
+    # print "Unescaping PV name $params{ name }\n";
     $params{ name } =~ s/&#58;/:/g;
     $self->parse( \%params );
     return $self;   

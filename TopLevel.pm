@@ -38,4 +38,21 @@ my $jsonObj = shift;
     return( $self );
 }
 
+sub param{
+my $self = shift;
+my $paramId = shift;
+
+    if( @_ ){
+        $self->${$paramId} = shift;
+    }
+    else{
+        if( exists( $self->{$paramId} ) ){
+            return( $self->{$paramId} );
+        }
+        else{
+            return undef;
+        }
+    }
+}
+
 1;

@@ -1,0 +1,12 @@
+#! softIoc
+
+
+dbLoadDatabase("./softIoc.dbd")
+softIoc_registerRecordDeviceDriver(pdbbase)
+dbLoadRecords( "./caTest.db" )
+
+iocInit
+
+dbl
+
+

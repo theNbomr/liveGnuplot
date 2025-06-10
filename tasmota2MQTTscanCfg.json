@@ -1,3 +1,4 @@
+
 {
     # This is a comment line (non-standard in JSON formatted data)
     # Comment lines ( '#' as first non-whitespace character on a line) are
@@ -9,11 +10,13 @@
         "comment_2" : "2025-May-20 RN thenbomr@gmail.com",
         "comment_3" : "2025-May-28 RN Work in progress <git@github.com:theNbomr/liveGnuplot.git>"
     },
+
+    #  PVs are context sensitive; they are possible stores and also possible subscriptions.
     #  Q: If we're using JSON syntax for include-file functionality, shouldn't the
     #     semantics follow JSON rules? ie. not on a line-by-line oriented basis?
     #  A: Yup, probably, but it works for now, and it makes [enough] sense for human-maintained files.
     # Pre-include comment
-    "include" : { "file" : "pvs.json", "filter" : "colon2html" },
+    "include" : { "file" : "pvs.json", "filter" : "colon2html" }
     # Post-include comment. There should be a blank line following, and then '"metrics"'...
 
     "metrics" : { 
@@ -41,7 +44,19 @@
             "xdata"   : "$.Time",
             "xformat" : "timedate",
             "store" : [
-                { "file" : "111_esp01_signal" }
+                { "file" : "111_esp01_signal" },
+                { "pv" : "IXYZ_Q5_VOL"}
+            ]
+        },
+        "111_d1mini_signal" : {
+            "broker" : "opi3remote",
+            "topic"  : "tele/tasmota_E14510/STATE",
+            "ydata"  : "$.Wifi.Signal",
+            "yformat" : "number",
+            "xdata"   : "$.Time",
+            "xformat" : "timedate",
+            "store" : [
+                { "file" : "111_d1mini_signal" }
             ]
         },
         
@@ -131,6 +146,11 @@
         "rnIoT_esp01_temp" : {
             "directory" : "/tmp/home/bomr/data/116",
             "basename"  : "rn_IoT_eps01_temp"
+        },
+
+        "111_d1mini_signal" : {
+            "directory" : "/tmp/home/bomr/data/111",
+            "basename"  : "111_d1mini_signal"
         }
     },
     
