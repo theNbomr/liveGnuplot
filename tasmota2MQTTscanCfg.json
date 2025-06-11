@@ -45,7 +45,7 @@
             "xformat" : "timedate",
             "store" : [
                 { "file" : "111_esp01_signal" },
-                { "pv" : "IXYZ_Q5_VOL"}
+                { "pv" : "RN_TEST1_AI1"}
             ]
         },
         "111_d1mini_signal" : {

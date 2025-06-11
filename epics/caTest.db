@@ -1,5 +1,12 @@
 #= 
 #= 
+record(calc,"RN:TEST1:CALC1") {
+    field(DESC,"calculation record")
+    field(SCAN,"1 second")
+    field(CALC,"A+1")
+    field(INPA,"RN:TEST1:CALC1.VAL")
+    field(FLNK,"RN:TEST1:CALC2.PROC")
+}
 record(calc,"RN:TEST1:CALC2"){
     field(DESC,"calc record")
     field(INPA,"RN:TEST1:CALC1.VAL")
@@ -11,12 +18,8 @@ record(calc,"RN:TEST1:CALC3"){
     field(INPA,"RN:TEST1:CALC1.VAL")
     field(CALC,"SIN(A*3.1415926/180)")
 }
-record(calc,"RN:TEST1:CALC1") {
-    field(DESC,"calculation record")
-    field(SCAN,"1 second")
-    field(CALC,"A+1")
-    field(INPA,"RN:TEST1:CALC1.VAL")
-    field(FLNK,"RN:TEST1:CALC2.PROC")
+record(ai,"RN:TEST1:AI1"){
+    field(DESC,"ai record")
 }
 
 

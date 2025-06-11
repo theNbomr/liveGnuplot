@@ -7,6 +7,8 @@ use lib ".";
 use JSON::Path;
 require epicsCA;
 
+use constant    PI => 3.1415926;
+
 # use Data::Dumper;
 
 #  Grab a whole file as specified on commandline
@@ -212,6 +214,13 @@ if( defined( $metrics ) ){
                 hashDump( $brokers{ $metricBrokerId }, "$metricId broker: " );
             }
         }
+
+        #
+        #   Test access to runtime Object database. Use Object/Classs methods to access
+        #   instance data, just like the state of a MQTT subscription callback, or an 
+        #   EPICS PV subscription event. We just don't have to have a live subscription to
+        #   do these tests...
+        #
         $metric->metricExternals();
     }
 }
@@ -445,12 +454,12 @@ my $self = shift;
                 else{
                     # main::hashDump( $main::dbs{ $storeValue }, "\t".$self->{ name }. "/". $storeType );
                     my $pvObj = $main::pvs{ $storeValue };
-                    my $pvName       = $pvObj->param( "name " );
+                    my $pvName       = $pvObj->param( "name" );
                     my $serverPort   = $pvObj->param( "EPICS_CA_SERVER_PORT" );
                     my $repeaterPort = $pvObj->param( "EPICS_CA_REPEATER_PORT" );
-                    print "caPut( $pvName, 3.1415926, $serverPort, $repeaterPort )\n";
+                    print "caput( $pvName, 3.1415926, $serverPort, $repeaterPort )\n";
+                    main::caput( $pvName, 3.1415926, $serverPort, $repeaterPort );
                 }
-
             }
             print "========\n";
         }
