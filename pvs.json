@@ -2,8 +2,8 @@
     
     "pvs" : { 
     #
-    #   Q: How do we deal with EPICS PV names that have embedded colons (':')
-    #   in the JSON notation?
+    #   Q: How do we deal with EPICS PV names that have 
+    #      embedded colons (':') in the JSON notation?
     #   A: Don't use them as IDs. Make the PVname an instance value.
     #
         "IXYZ_Q5_VOL" : {
@@ -12,7 +12,6 @@
             "EPICS_CA_REPEATER_PORT" : 9101,
             "EPICS_CA_AUTO_ADDR_LIST" : "YES",
             "EPICS_CA_ADDR_LIST"     : ""
-
         },
 
         "IXYZ_CG01_RDVAC" : {
@@ -21,7 +20,6 @@
             "EPICS_CA_REPEATER_PORT" : 9001,
             "EPICS_CA_AUTO_ADDR_LIST" : "YES",
             "EPICS_CA_ADDR_LIST"     : ""
-
         },
 
         "RN_TEST1_AI1" : {
@@ -30,7 +28,6 @@
             "EPICS_CA_SERVER_PORT"   : 9102,
             "EPICS_CA_AUTO_ADDR_LIST" : "YES",
             "EPICS_CA_ADDR_LIST"     : ""
-
         },
 
         "RN_TEST1_HEARTBEAT" : {
@@ -41,4 +38,5 @@
             "EPICS_CA_ADDR_LIST"     : ""
         }
     }
+    ,
 

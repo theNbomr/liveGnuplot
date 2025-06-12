@@ -1,0 +1,40 @@
+    "files" : {
+        "111_esp01_signal" : {
+            "directory" : "/tmp/home/bomr/data/wifi_strength",
+            "basename"  : "$(timestamp)_111_esp01_signal",
+            # Durations: [0-9]+S|M|H|d|m|y
+            # Q: Does this belong with the File, or the Metric?
+            # A: Belongs with File, because other sink types will 
+            #    have other means to break up the data.
+            "duration"  : "1D",
+            # Used to determine the filespec timestamp component
+            "timestamp"   : "%Y-%m-%dT%H:%M:%S"
+        },
+        
+        "111_esp32_signal" : {
+            "directory" : "/tmp/home/bomr/data/wifi_strength",
+            "basename"  : "111_esp32_signal"
+        },
+
+        "111_esp01_temperature" : {
+            "directory" : "/tmp/home/bomr/data/esp01_temperature",
+            "basename"  : "111_esp01_temperature"
+        },
+
+        "116_lr_temperature" : {
+            "directory" : "/tmp/home/bomr/data/116",
+            "basename"  : "lr_temperature"
+        },
+
+        "rnIoT_esp01_temp" : {
+            "directory" : "/tmp/home/bomr/data/116",
+            "basename"  : "rn_IoT_eps01_temp"
+        },
+
+        "111_d1mini_signal" : {
+            "directory" : "/tmp/home/bomr/data/111",
+            "basename"  : "111_d1mini_signal"
+        }
+    }
+    
+    

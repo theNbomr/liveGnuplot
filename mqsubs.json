@@ -15,5 +15,51 @@
             "ydata"   : "$.TEMPERATURE",
             "xformat" : "timedate",
             "yformat" : "number"
+        },
+
+        "111_esp01_temperature" : {
+            "broker" : "orangepi3",
+            "topic"  : "tele/tasmota_F74C1D/SENSOR",
+            "ydata"  : "$.DS18B20.Temperature",
+            "yformat" : "number",
+            "xdata"   : "$.Time",
+            "xformat" : "timedate"
+        },
+
+        "111_esp01_signal" : {
+#             "broker" : "brokebroker",
+            "broker" : "opi3remote",
+            "topic"  : "tele/tasmota_F74C1D/STATE",
+            "ydata"  : "$.Wifi.Signal",
+            "yformat" : "number",
+            "xdata"   : "$.Time",
+            "xformat" : "timedate"
+        },
+
+        "111_d1mini_signal" : {
+            "broker" : "opi3remote",
+            "topic"  : "tele/tasmota_E14510/STATE",
+            "ydata"  : "$.Wifi.Signal",
+            "yformat" : "number",
+            "xdata"   : "$.Time",
+            "xformat" : "timedate"
+        },
+
+        "111_esp32_signal" : {
+            "broker" : "orangepi3",
+            "topic"  : "tele/tasmota_FC72F4/STATE",
+            "ydata"  : "$.Wifi.Signal",
+            "yformat" : "number",
+            "xdata"   : "$.Time",
+            "xformat" : "timedate"
+        },
+
+        "116_lr_temp" : {
+            "broker" : "delldeb8remote",
+            "topic"  : "RN_IOT_DAQ/00:00:00:5f:66:29",
+            "xdata"   : "$.TIME",
+            "ydata"   : "$.TEMPERATURE",
+            "xformat" : "timedate",
+            "yformat" : "number"
         }
     }

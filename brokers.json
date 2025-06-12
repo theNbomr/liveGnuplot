@@ -1,0 +1,33 @@
+    
+    "mqtt_brokers" : { 
+
+        "delldeb8" : {
+            "ip": "192.168.0.19",
+            "port" : "1883"
+        },
+        
+        "delldeb8remote" : {
+            "ip": "s01060040f484018a.vf.shawcable.net",
+            "port" : "19883"
+        },
+
+        "delli3deb11" : { 
+            "ip" : "192.168.1.101",
+            "port" : "1883"
+        },
+
+        "orangepi3" : {
+            "ip" : "192.168.1.100",
+            "port" : "1883"
+        },
+
+        "opi3remote" : {
+            "ip" : "207.216.254.31",
+            "port" : "18883"
+        },
+
+        "fakebroker" : {
+            "ip" : "123.23.1.0",
+            "port" : "11883"
+        }
+    }

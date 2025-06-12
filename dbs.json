@@ -1,0 +1,27 @@
+
+    "dbs" : { 
+        "esp01_signal" : {
+            "dbms"     : "postgresql",
+            "database" : "111Home", 
+            "schema"   : "111_signal",
+            "table"    : "111_esp01_signal",
+            "xcolumn"  : "timedate",
+            "ycolumn"  : "signal"
+        },
+        "esp32_signal" : {
+            "dbms"     : "postgresql", 
+            "database" : "111Home",
+            "schema"   : "111_signal",
+            "table"    : "111_esp32_signal",
+            "xcolumn"  : "timedate",
+            "ycolumn"  : "signal"
+        },
+        "esp01_temperature" : {
+            "dbms"     : "postgresql",
+            "database" : "111Home", 
+            "schema"   : "111_temperature",
+            "table"    : "111_esp01_temperature",
+            "xcolumn"  : "timedate",
+            "ycolumn"  : "temperature"
+        }
+    }

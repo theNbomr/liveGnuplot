@@ -1,4 +1,3 @@
-
 {
     # This is a comment line (non-standard in JSON formatted data)
     # Comment lines ( '#' as first non-whitespace character on a line) are
@@ -11,62 +10,44 @@
         "comment_3" : "2025-May-28 RN Work in progress <git@github.com:theNbomr/liveGnuplot.git>"
     },
 
-    #  PVs are context sensitive; they are possible sinks and also possible subscriptions.
-    #  Q: If we're using JSON syntax for include-file functionality, shouldn't the
-    #     semantics follow JSON rules? ie. not on a line-by-line oriented basis?
-    #  A: Yup, probably, but it works for now, and it makes [enough] sense for human-maintained files.
-    # Pre-include comment
-    "include" : { "file" : "pvs.json", "filter" : "colon2html" }
-    # Post-include comment. There should be a blank line following, and then '"metrics"'...
-
-    "metrics" : { 
+    "metrics" : {
         "111_esp01_temperature" : {
-            "broker" : "orangepi3",
-            "topic"  : "tele/tasmota_F74C1D/SENSOR",
-            "ydata"  : "$.DS18B20.Temperature",
-            "yformat" : "number",
-            "xdata"   : "$.Time",
-            "xformat" : "timedate",
+            "source" : {
+                #
+                #   We should be able to use shortcuts/macros for identifiers: eg: ${metricId}
+                #   "mqttsub" : "${metricId}" expands to :
+                "mqttsub" : "111_esp01_temperature"
+            },
             "sink" : [
                 { "file" : "111_esp01_temperature" },
-                { "db"   : "esp01_temperature" }
+                { "db"   : "111_temp" }
             ]
         },
         #
         #   A metric specifying a non-existant IP:Port, for testing
         #
         "111_esp01_signal" : {
-#             "broker" : "brokebroker",
-            "broker" : "opi3remote",
-            "topic"  : "tele/tasmota_F74C1D/STATE",
-            "ydata"  : "$.Wifi.Signal",
-            "yformat" : "number",
-            "xdata"   : "$.Time",
-            "xformat" : "timedate",
+            "source" : {
+                "mqttsub" : "111_esp01_signal"
+            },
             "sink" : [
                 { "file" : "111_esp01_signal" },
                 { "pv" : "RN_TEST1_AI1"}
             ]
         },
         "111_d1mini_signal" : {
-            "broker" : "opi3remote",
-            "topic"  : "tele/tasmota_E14510/STATE",
-            "ydata"  : "$.Wifi.Signal",
-            "yformat" : "number",
-            "xdata"   : "$.Time",
-            "xformat" : "timedate",
+            "source" : {
+                "mqttsub" : "111_d1mini_signal"
+            },
             "sink" : [
                 { "file" : "111_d1mini_signal" }
             ]
         },
         
         "111_esp32_signal" : {
-            "broker" : "orangepi3",
-            "topic"  : "tele/tasmota_FC72F4/STATE",
-            "ydata"  : "$.Wifi.Signal",
-            "yformat" : "number",
-            "xdata"   : "$.Time",
-            "xformat" : "timedate",
+            "source" : {
+                "mqttsub" : "111_esp32_signal"
+            },
             "sink" : [
                 { "file" : "111_esp32_signal" }
                 ,{ "db"  : "esp32_signal" }
@@ -74,127 +55,41 @@
         },
 
         "116_lr_temp" : {
-            "broker" : "delldeb8remote",
-            "topic"  : "RN_IOT_DAQ/00:00:00:5f:66:29",
-            "xdata"   : "$.TIME",
-            "ydata"   : "$.TEMPERATURE",
-            "xformat" : "timedate",
-            "yformat" : "number",
+            "source" : {
+                "mqttsub" : "116_lr_temp"
+            },       
             "sink" : [
                 { "file" : "116_lr_temperature" },
-                { "file" : "rnIoT_esp01_temp" }
-#                 { "db" : "esp32_signal" }
+                { "file" : "rnIoT_esp01_temp" },
+                { "db" : "esp32_signal" }
             ]
         },
 
         "111_ioc_heartbeat" : {
             "source" : {
-                "type" : "epicspv",
-                "id"   : "rn_test1_heartbeat"
-            },
-            "source" : {
-                "type" : "mqttsub",
-                "id"   : "rn_test1_heartbeat"
+                "epicspv" : "rn_test1_heartbeat"
             },
             "sink" : [
                 { "file" : "116_lr_temperature" },
-                { "file" : "rnIoT_esp01_temp" }
-#                 { "db" : "esp32_signal" }
+                { "file" : "rnIoT_esp01_temp" },
+                { "db" : "esp32_signal" }
             ]
         }
     },
-    
-    "mqtt_brokers" : { 
-        "delldeb8" : {
-            "ip": "192.168.0.19",
-            "port" : "1883"
-        },
-        "delldeb8remote" : {
-            "ip": "s01060040f484018a.vf.shawcable.net",
-            "port" : "19883"
-        },
-        "delli3deb11" : { 
-            "ip" : "192.168.1.101",
-            "port" : "1883"
-        },
-        "orangepi3" : {
-            "ip" : "192.168.1.100",
-            "port" : "1883"
-        },
-        "opi3remote" : {
-            "ip" : "207.216.254.31",
-            "port" : "18883"
-        },
-        "fakebroker" : {
-            "ip" : "123.23.1.0",
-            "port" : "11883"
-        }
-    },
-    
-    "files" : {
-        "111_esp01_signal" : {
-            "directory" : "/tmp/home/bomr/data/wifi_strength",
-            "basename"  : "$(timestamp)_111_esp01_signal",
-            # Durations: [0-9]+S|M|H|d|m|y
-            # Q: Does this belong with the File, or the Metric?
-            # A: Belongs with File, because other sink types will 
-            #    have other means to break up the data.
-            "duration"  : "1D",
-            # Used to determine the filespec timestamp component
-            "timestamp"   : "%Y-%m-%dT%H:%M:%S"
-        },
-        
-        "111_esp32_signal" : {
-            "directory" : "/tmp/home/bomr/data/wifi_strength",
-            "basename"  : "111_esp32_signal"
-        },
 
-        "111_esp01_temperature" : {
-            "directory" : "/tmp/home/bomr/data/esp01_temperature",
-            "basename"  : "111_esp01_temperature"
-        },
+    #  PVs are context sensitive; they are possible sinks and also possible subscriptions.
+    #  Q: If we're using JSON syntax for include-file functionality, shouldn't the
+    #     semantics follow JSON rules? ie. not on a line-by-line oriented basis?
+    #  A: Yup, probably, but it works for now, and it makes [enough] sense for human-maintained files.
+    # Pre-include comment
+    "include" : { "file" : "pvs.json" },
+    # Post-include comment. There should be a blank line following this comment, and then '"metrics" '...
+    "junk" : { "any" : "object" },
 
-        "116_lr_temperature" : {
-            "directory" : "/tmp/home/bomr/data/116",
-            "basename"  : "lr_temperature"
-        },
-
-        "rnIoT_esp01_temp" : {
-            "directory" : "/tmp/home/bomr/data/116",
-            "basename"  : "rn_IoT_eps01_temp"
-        },
-
-        "111_d1mini_signal" : {
-            "directory" : "/tmp/home/bomr/data/111",
-            "basename"  : "111_d1mini_signal"
-        }
-    },
-    
-    "dbs" : { 
-        "esp01_signal" : {
-            "dbms"     : "postgresql",
-            "database" : "111Home", 
-            "schema"   : "111_signal",
-            "table"    : "111_esp01_signal",
-            "xcolumn"  : "timedate",
-            "ycolumn"  : "signal"
-        },
-        "esp32_signal" : {
-            "dbms"     : "postgresql", 
-            "database" : "111Home",
-            "schema"   : "111_signal",
-            "table"    : "111_esp32_signal",
-            "xcolumn"  : "timedate",
-            "ycolumn"  : "signal"
-        },
-        "esp01_temperature" : {
-            "dbms"     : "postgresql",
-            "database" : "111Home", 
-            "schema"   : "111_temperature",
-            "table"    : "111_esp01_temperature",
-            "xcolumn"  : "timedate",
-            "ycolumn"  : "temperature"
-        }
-    }
+    "include" : { "file" : "brokers.json" },
+    "include" : { "file" : "mqsubs.json" },
+    "include" : { "file" : "files.json" },
+    "include" : { "file" : "dbs.json" },
+    "end" : "of file"
 }
 
