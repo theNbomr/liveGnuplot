@@ -1,0 +1,19 @@
+    "mqsubs" : {
+
+        #
+        #   Each MQTT subscription JSON object is identified by an ID.
+        #   The metadata associated with the subscription is the payload 
+        #   of the JSON object, and is organized as a series 
+        #   of key-value pairs. The MQTT slient subscriber function and
+        #   the MQTT client callback function will need access to the
+        #   subscription metadata.
+        #
+        "rn_test1_heartbeat" : {
+            "broker"  : "delldeb8remote",
+            "topic"   : "RN_IOT_DAQ/00:00:00:5f:66:29",
+            "xdata"   : "$.TIME",
+            "ydata"   : "$.TEMPERATURE",
+            "xformat" : "timedate",
+            "yformat" : "number"
+        }
+    }

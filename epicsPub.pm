@@ -29,8 +29,6 @@ my $epicsCaRepeaterPort = shift;
     die "PV not found!" unless $chan->is_connected;
     $chan->put( $epicsValue );
     CA->pend_io(1);     # pend_io() only waits for up to maximum time.
-    # printf "    Value:         %s\n", $chan->value;
-
 
     return();
 

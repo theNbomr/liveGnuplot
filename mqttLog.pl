@@ -46,7 +46,7 @@ my %optHelp = (
     "help"        =>  "This helpful message",
     "verbose"     =>  "Report activities to console",
     "logBaseName" =>  "base filename, without date stamp or directory",
-    "logDirName"  =>  "directory name to store output logs",
+    "logDirName"  =>  "directory name to sink output logs",
 );
 my $timeStamp = "";
 my $voltage = "-1e6";

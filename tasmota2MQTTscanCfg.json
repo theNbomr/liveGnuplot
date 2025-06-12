@@ -11,7 +11,7 @@
         "comment_3" : "2025-May-28 RN Work in progress <git@github.com:theNbomr/liveGnuplot.git>"
     },
 
-    #  PVs are context sensitive; they are possible stores and also possible subscriptions.
+    #  PVs are context sensitive; they are possible sinks and also possible subscriptions.
     #  Q: If we're using JSON syntax for include-file functionality, shouldn't the
     #     semantics follow JSON rules? ie. not on a line-by-line oriented basis?
     #  A: Yup, probably, but it works for now, and it makes [enough] sense for human-maintained files.
@@ -27,7 +27,7 @@
             "yformat" : "number",
             "xdata"   : "$.Time",
             "xformat" : "timedate",
-            "store" : [
+            "sink" : [
                 { "file" : "111_esp01_temperature" },
                 { "db"   : "esp01_temperature" }
             ]
@@ -43,7 +43,7 @@
             "yformat" : "number",
             "xdata"   : "$.Time",
             "xformat" : "timedate",
-            "store" : [
+            "sink" : [
                 { "file" : "111_esp01_signal" },
                 { "pv" : "RN_TEST1_AI1"}
             ]
@@ -55,7 +55,7 @@
             "yformat" : "number",
             "xdata"   : "$.Time",
             "xformat" : "timedate",
-            "store" : [
+            "sink" : [
                 { "file" : "111_d1mini_signal" }
             ]
         },
@@ -67,7 +67,7 @@
             "yformat" : "number",
             "xdata"   : "$.Time",
             "xformat" : "timedate",
-            "store" : [
+            "sink" : [
                 { "file" : "111_esp32_signal" }
                 ,{ "db"  : "esp32_signal" }
             ]
@@ -80,7 +80,23 @@
             "ydata"   : "$.TEMPERATURE",
             "xformat" : "timedate",
             "yformat" : "number",
-            "store" : [
+            "sink" : [
+                { "file" : "116_lr_temperature" },
+                { "file" : "rnIoT_esp01_temp" }
+#                 { "db" : "esp32_signal" }
+            ]
+        },
+
+        "111_ioc_heartbeat" : {
+            "source" : {
+                "type" : "epicspv",
+                "id"   : "rn_test1_heartbeat"
+            },
+            "source" : {
+                "type" : "mqttsub",
+                "id"   : "rn_test1_heartbeat"
+            },
+            "sink" : [
                 { "file" : "116_lr_temperature" },
                 { "file" : "rnIoT_esp01_temp" }
 #                 { "db" : "esp32_signal" }
@@ -121,7 +137,7 @@
             "basename"  : "$(timestamp)_111_esp01_signal",
             # Durations: [0-9]+S|M|H|d|m|y
             # Q: Does this belong with the File, or the Metric?
-            # A: Belongs with File, because other Store types will 
+            # A: Belongs with File, because other sink types will 
             #    have other means to break up the data.
             "duration"  : "1D",
             # Used to determine the filespec timestamp component

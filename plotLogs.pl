@@ -80,7 +80,7 @@ my %optHelp = (
     "output"      =>  "Filename for plot image file (implies repeat=0)",
     "plotTitle"   =>  "Key titlebar content",
     "logBaseName" =>  "base name of log files, without date prefix",
-    "dataLogDir"  =>  "Where the data logs are stored",
+    "dataLogDir"  =>  "Where the data logs are sinkd",
 );
 
 # Need this so we can kill all of the 

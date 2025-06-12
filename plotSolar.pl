@@ -102,7 +102,7 @@ my %optHelp = (
     "repeat"      =>  "Time in minutes between updates",
     "output"      =>  "Filename for plot image file (implies repeat=0)",
     "logBaseName" =>  "base name of log files, without date prefix",
-    "logDir"      =>  "Where the data logs are stored",
+    "logDir"      =>  "Where the data logs are sinkd",
 );
 
 # Need this so we can kill all of the 

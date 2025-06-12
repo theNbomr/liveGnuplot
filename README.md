@@ -26,12 +26,14 @@ TO DO:
  * Log file rotation
  * Log file duration specification [In Progress: timeUtils.pm]
  * EPICS metrics
- * EPICS stores
+ * EPICS stores  [Works in basic testing; JSON parsing and Object DB done]
  * create filesystem directories at runtime if necessary [Done]
  * Create reference JSON Config file and document configs
  * Implement JSON 'include-file' [Done, needs tests & refinement]
- * timestamp creation for logfile names and possibly for log records
+ * timestamp creation for logfile names and possibly for log records [timestamp specifier support done]
  * Implement unit tests for parsing, epecially
+ * Possibly implement config file macros and/or environment interface
+ 
 
 
 See the Wiki for up-to-date and detailed information

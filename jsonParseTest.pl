@@ -66,7 +66,7 @@ my %metrics = ();
 my %brokers = ();
 my %files = ();
 my %dbs = ();
-# my %stores = ();
+# my %sinks = ();
 my %pvs = ();
 
     # ====================================================================
@@ -166,33 +166,33 @@ my %pvs = ();
             my $metric = $metrics{ $metricId };
 
             #
-            #   Validate Stores
+            #   Validate Sinks
             #   
-            my $metricStores = $metric->param( 'store' );
-            if( !defined( $metricStores ) ){
-                die "No stores for metric '$metricId' ";
+            my $metricSinks = $metric->param( 'sink' );
+            if( !defined( $metricSinks ) ){
+                die "No sinks for metric '$metricId' ";
             }
             else{
-                print "Stores for $metricId: $metricStores\n";
-                foreach my $metricStore ( @{ $metricStores } ){
-                    my ( $storeType ) = keys %{ $metricStore };
-                    my $storeValue = $metricStore->{ $storeType };
-                    print "Type: $storeType, Value: $storeValue\n";
+                print "Sinks for $metricId: $metricSinks\n";
+                foreach my $metricSink ( @{ $metricSinks } ){
+                    my ( $sinkType ) = keys %{ $metricSink };
+                    my $sinkValue = $metricSink->{ $sinkType };
+                    print "Type: $sinkType, Value: $sinkValue\n";
 
-                    if( lc( $storeType)  eq 'file' ){
-                        if( !defined( $files{ $storeValue } ) ){
-                            print "Error: No 'file' store named $storeValue was defined\n";
+                    if( lc( $sinkType)  eq 'file' ){
+                        if( !defined( $files{ $sinkValue } ) ){
+                            print "Error: No 'file' sink named $sinkValue was defined\n";
                         }
                         else{
-                            hashDump( $files{ $storeValue } );
+                            hashDump( $files{ $sinkValue } );
                         }
                     }
-                    elsif( lc( $storeType)  eq 'db' ){
-                        if( !defined( $dbs{ $storeValue } ) ){
-                            print "Error: No 'db' store named $storeValue was defined\n";
+                    elsif( lc( $sinkType)  eq 'db' ){
+                        if( !defined( $dbs{ $sinkValue } ) ){
+                            print "Error: No 'db' sink named $sinkValue was defined\n";
                         }
                         else{
-                            hashDump( $dbs{ $storeValue } );
+                            hashDump( $dbs{ $sinkValue } );
                         }
                     }
                     print "========\n";

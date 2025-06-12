@@ -50,8 +50,8 @@ sub usage($$);
 #             "yformat" : "number",
 #             "xdata"   : "$.Time",
 #             "xformat" : "timedate",
-#             "store" : [
-#                 { "file" : "111_esp01_temperature" }  <== Each Store Object must match the 
+#             "sink" : [
+#                 { "file" : "111_esp01_temperature" }  <== Each Sink Object must match the 
 #                                                         File/Db Id in the respective top-level section
 #             ]
 #         },
@@ -63,7 +63,7 @@ sub usage($$);
 #             "yformat" : "number",
 #             "xdata"  : "$.Time",
 #             "xformat" : "timedate",
-#             "store" : [
+#             "sink" : [
 #                 { "file" : "111_esp01_signal" }
 #             ]
 #         },
@@ -75,7 +75,7 @@ sub usage($$);
 #             "yformat" : "number",
 #             "xdata"  : "$.Time",
 #             "xformat" : "timedate",
-#             "store" : [
+#             "sink" : [
 #                 { "file" : "111_esp32_signal" },
 #                 { "db"   : "esp32_signal" }
 #             ]
@@ -121,7 +121,7 @@ my %optHelp = (
     "help"        =>  "This helpful message",
     "verbose"     =>  "Report activities to console",
     # "logBaseName" =>  "base name of log files, without date prefix",
-    # "dataLogDir"  =>  "Where the data logs are stored",
+    # "dataLogDir"  =>  "Where the data logs are sinkd",
     # "mqttBrokerIp" => "IP address or name of the MQTT broker",
     # "mqttBrokerPort" => "IP Port of the MQTT broker",
     # "mqttTopic"   =>  "MQTT Topic to subscribe to",
@@ -352,45 +352,45 @@ my %optHelp = (
                 #         "yformat" : "number",
                 #         "xdata"   : "$.Time",
                 #         "xformat" : "timedate",
-                #         "store" : { 
+                #         "sink" : { 
                 #             "file" : "111_esp01_temperature",
                 #             "db"   : "esp01_temperature" 
                 #         }
                 #     },
-                elsif( $propertyName eq 'store'){
-                    debugPrint "\n=========================\nValidating store(s) ... ";
+                elsif( $propertyName eq 'sink'){
+                    debugPrint "\n=========================\nValidating sink(s) ... ";
 
                     # PropertyVal is an ARRAYref, so dereference it and iterate over the array.
-                    my @metricStores = @{ $propertyVal };
-                    foreach my $metricStore ( @metricStores ){
+                    my @metricSinks = @{ $propertyVal };
+                    foreach my $metricSink ( @metricSinks ){
 
-                        # metricStore is a HASHRef... => { "file/db" : "fileId/dbId" }
-                        foreach my $storeType ( keys( %{ $metricStore } ) ){
-                            my $storeId = $metricStore->{ $storeType };
-                            debugPrint "StoreType: $storeType, storeId: $storeId\n";
+                        # metricSink is a HASHRef... => { "file/db" : "fileId/dbId" }
+                        foreach my $sinkType ( keys( %{ $metricSink } ) ){
+                            my $sinkId = $metricSink->{ $sinkType };
+                            debugPrint "SinkType: $sinkType, sinkId: $sinkId\n";
 
-                            if( $storeType eq 'file' ){
-                                my $fileId = $metricStore->{ $storeType };
+                            if( $sinkType eq 'file' ){
+                                my $fileId = $metricSink->{ $sinkType };
                                 if( $verbose ){
-                                    debugPrint "store.file: $fileId ";
+                                    debugPrint "sink.file: $fileId ";
                                 }
                                 if( exists( $fileObjs{ $fileId } ) ){
                                     debugPrint " checks out\n";
-                                    $thisMetricObj->store( 'file' => $fileId );
+                                    $thisMetricObj->sink( 'file' => $fileId );
                                 }
                                 else{
                                     print STDERR "\nNo such File Id: '$fileId'\n";
                                     exit( 1 );
                                 }
                             }
-                            elsif( $storeType eq 'db' ){
-                                my $dbId = $metricStore->{ $storeType };
+                            elsif( $sinkType eq 'db' ){
+                                my $dbId = $metricSink->{ $sinkType };
                                 if( $verbose ){
-                                    debugPrint "store.db: $dbId ";
+                                    debugPrint "sink.db: $dbId ";
                                 }
                                 if( exists( $dbObjs{ $dbId } ) ){
                                     debugPrint " checks out\n";
-                                    $thisMetricObj->store( 'db' => $dbId );
+                                    $thisMetricObj->sink( 'db' => $dbId );
                                 }
                                 else{
                                     print STDERR "\nNo such DB Id: '$dbId'\n";
@@ -398,12 +398,12 @@ my %optHelp = (
                                 }
                             }
                             else {
-                                print STDERR "Invalid store Type: '$storeType'\n";
+                                print STDERR "Invalid sink Type: '$sinkType'\n";
                                 exit( 1 );
                             }
                         }
                     }
-                    debugPrint "\n==================< end store validation >===========\n";
+                    debugPrint "\n==================< end sink validation >===========\n";
                 }
                 else{
                     if( $verbose ){
@@ -440,17 +440,17 @@ my %optHelp = (
         debugPrint "\t$metricId: ", join( ", ", $metricObj->properties ), "\n";
 
         foreach my $metricProperty ( $metricObj->properties() ){
-            if( $metricProperty ne 'stores' ){
+            if( $metricProperty ne 'sinks' ){
                 debugPrint "Property: ", $metricProperty, 
                             ", Value: ", $metricObj->property( $metricProperty ), "\n";
             }
             else{
                 debugPrint "Property (@): ", $metricProperty, 
-                            ", Value: ", join( " // ", $metricObj->store() ), "\n";
+                            ", Value: ", join( " // ", $metricObj->sink() ), "\n";
             }
         }
-        my @metricStores = $metricObj->store( );
-        print "$metricId Stores: ", join( " : ", @metricStores ), "\n\n";
+        my @metricSinks = $metricObj->sink( );
+        print "$metricId Sinks: ", join( " : ", @metricSinks ), "\n\n";
 
         debugPrint( "\n" );
 
